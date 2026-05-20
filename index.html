@@ -37,7 +37,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 @keyframes filterAnim{0%{filter:none}35%{filter:brightness(1.3)saturate(1.5)contrast(1.1)}100%{filter:brightness(1.1)saturate(1.08)contrast(1.07)}}
 @keyframes notif{0%{transform:translateX(120%);opacity:0}10%{transform:translateX(0);opacity:1}80%{transform:translateX(0);opacity:1}100%{transform:translateX(120%);opacity:0}}
 
-/* LAYOUT */
 #app{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:rgba(255,255,255,.025);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;padding:22px 14px 18px}
 .logo{padding:2px 8px 22px;border-bottom:1px solid var(--border);margin-bottom:10px}
@@ -94,20 +93,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .ebox{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:var(--rsm);padding:11px;font-size:12px;color:#fca5a5;white-space:pre-wrap;margin-top:10px}
 .nbox{position:fixed;top:16px;right:16px;z-index:9999;max-width:300px;animation:notif 4.2s ease forwards;background:linear-gradient(135deg,#1a1535,#0d2818);border:1px solid rgba(16,185,129,.35);border-radius:var(--r);padding:13px 16px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
 
-/* SLIDER ROW */
 .slider-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .slider-header{display:flex;justify-content:space-between;align-items:center}
 .slider-label{font-size:12px;font-weight:600;color:var(--text)}
 .slider-val{font-size:12px;font-weight:800;color:var(--p);min-width:24px;text-align:right}
 
-/* BG PICKER */
 .bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
-.bg-item{border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .18s;aspect-ratio:1}
+.bg-item{border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .18s;aspect-ratio:1;display:flex;flex-direction:column}
 .bg-item.selected{border-color:var(--p);box-shadow:0 0 0 2px rgba(139,92,246,.4)}
 .bg-item:hover{transform:scale(1.04)}
-.bg-canvas{width:100%;height:100%;display:block}
+.bg-canvas{width:100%;flex:1;display:block}
+.bg-lbl{font-size:9px;font-weight:600;color:var(--sub);text-align:center;padding:3px 2px;background:rgba(0,0,0,.5)}
 
-/* AUTH SCREEN */
+/* AUTH */
 .auth-screen{position:fixed;inset:0;background:#0f0e17;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .auth-box{background:#16142a;border:1px solid var(--border);border-radius:22px;padding:32px 28px;max-width:440px;width:100%;animation:pop .3s ease;margin:auto}
 .auth-logo{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--p),var(--g));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:4px}
@@ -124,7 +122,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .auth-ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:var(--rsm);padding:10px 13px;font-size:13px;color:#a7f3d0;margin-bottom:14px;display:none}
 .guest-box{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:var(--rsm);padding:14px 16px;margin-top:16px}
 .guest-box p{font-size:13px;color:#fde68a;line-height:1.65;margin-bottom:12px}
-.guest-box strong{color:var(--warn)}
+
+/* PASSWORD FIELD */
+.pass-wrap{position:relative}
+.pass-wrap .inp{padding-right:44px}
+.pass-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--sub);font-size:16px;padding:4px;line-height:1}
+.pass-eye:hover{color:var(--text)}
+
+/* FORGOT PASSWORD */
+.forgot-link{font-size:12px;color:var(--p);cursor:pointer;text-align:right;display:block;margin-top:6px;margin-bottom:14px}
+.forgot-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -132,10 +139,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <script>
 'use strict';
 
-const SITE_URL = 'https://optivinted2.netlify.app';
+const SITE_URL = 'https://optivintedai.netlify.app';
 const SUPABASE_URL = 'https://xipkqhctpyjjtmmuxxac.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpcGtxaGN0cHlqanRtbXV4eGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzc4NDgsImV4cCI6MjA5NDQ1Mzg0OH0.ExADaMv_83GNQvWChw-xOeSexxcQfd76ZDcTVTlAvv4';
-const GROQ_KEY = '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';
+const GROQ_KEY = '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';
 const GROQ_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const GROQ_TEXT = 'llama-3.3-70b-versatile';
 
@@ -196,7 +203,7 @@ async function dbUpdate(table, id, updates) {
   if (error) throw error;
 }
 
-// ══ IMAGE UTILS ══
+// ══ IMAGE ══
 function compressImg(file, maxPx = 1024) {
   return new Promise((res, rej) => {
     const img = new Image(), url = URL.createObjectURL(file);
@@ -214,82 +221,81 @@ function compressImg(file, maxPx = 1024) {
 }
 
 // ══ BACKGROUNDS ══
-// 5 backgrounds: Blanc pur, Gris clair, Bois clair, Bleu ciel, Tapis flat lay
 const BACKGROUNDS = [
   {
-    id: 'white', label: 'Blanc pur', emoji: '🤍',
+    id: 'white', label: 'Blanc pur',
     draw: (ctx, w, h) => {
       ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, w, h);
-      // subtle vignette
-      const g = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.8);
-      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(240,240,240,0.4)');
+      const g = ctx.createRadialGradient(w/2, h*0.8, 0, w/2, h*0.8, h*0.6);
+      g.addColorStop(0, 'rgba(245,245,245,0.6)'); g.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     }
   },
   {
-    id: 'grey', label: 'Gris clair', emoji: '🩶',
-    draw: (ctx, w, h) => {
-      ctx.fillStyle = '#E8E8E8'; ctx.fillRect(0, 0, w, h);
-      const g = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.9);
-      g.addColorStop(0, 'rgba(255,255,255,0.15)'); g.addColorStop(1, 'rgba(180,180,180,0.25)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    }
-  },
-  {
-    id: 'wood', label: 'Bois clair', emoji: '🪵',
-    draw: (ctx, w, h) => {
-      ctx.fillStyle = '#D4A97A'; ctx.fillRect(0, 0, w, h);
-      // wood grain lines
-      ctx.strokeStyle = 'rgba(160,100,50,0.12)';
-      for (let i = 0; i < h * 2; i += 8) {
-        ctx.beginPath();
-        ctx.moveTo(0, i); ctx.bezierCurveTo(w * 0.3, i - 3, w * 0.7, i + 3, w, i);
-        ctx.lineWidth = Math.random() * 1.5 + 0.5; ctx.stroke();
-      }
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, 'rgba(255,220,170,0.18)'); g.addColorStop(1, 'rgba(150,90,40,0.12)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    }
-  },
-  {
-    id: 'sky', label: 'Bleu ciel', emoji: '💙',
+    id: 'grey', label: 'Gris doux',
     draw: (ctx, w, h) => {
       const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, '#DAEEFF'); g.addColorStop(1, '#B8DCFF');
+      g.addColorStop(0, '#ECECEC'); g.addColorStop(1, '#D8D8D8');
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(w*0.25, h*0.3, 60, 20, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(w*0.7, h*0.15, 80, 22, 0, 0, Math.PI*2); ctx.fill();
     }
   },
   {
-    id: 'rug', label: 'Tapis flat lay', emoji: '🪞',
+    id: 'marble', label: 'Marbre',
     draw: (ctx, w, h) => {
-      // Flat lay white rug with visible border
-      ctx.fillStyle = '#F5F5F0'; ctx.fillRect(0, 0, w, h);
-      // rug area
-      const margin = Math.min(w, h) * 0.06;
-      ctx.fillStyle = '#FAFAF8';
-      ctx.shadowColor = 'rgba(0,0,0,0.12)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 4;
-      ctx.beginPath(); ctx.roundRect(margin, margin, w - margin*2, h - margin*2, 8); ctx.fill();
-      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-      // rug border decoration
-      ctx.strokeStyle = 'rgba(210,205,195,0.8)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.roundRect(margin+8, margin+8, w-margin*2-16, h-margin*2-16, 6); ctx.stroke();
-      // subtle texture dots
-      ctx.fillStyle = 'rgba(200,195,185,0.18)';
-      for (let x = margin+20; x < w-margin-10; x += 10) {
-        for (let y = margin+20; y < h-margin-10; y += 10) {
-          ctx.beginPath(); ctx.arc(x, y, 0.8, 0, Math.PI*2); ctx.fill();
-        }
+      ctx.fillStyle = '#F2EDE8'; ctx.fillRect(0, 0, w, h);
+      // marble veins
+      for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(200,185,170,${0.15 + Math.random()*0.2})`;
+        ctx.lineWidth = Math.random() * 3 + 1;
+        const x0 = Math.random() * w, y0 = 0;
+        const cp1x = Math.random() * w, cp1y = h * 0.3;
+        const cp2x = Math.random() * w, cp2y = h * 0.7;
+        const x1 = Math.random() * w, y1 = h;
+        ctx.moveTo(x0, y0); ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x1, y1);
+        ctx.stroke();
+      }
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, 'rgba(255,252,248,0.3)'); g.addColorStop(1, 'rgba(220,210,200,0.2)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
+  },
+  {
+    id: 'sky', label: 'Bleu ciel',
+    draw: (ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#C8E6FF'); g.addColorStop(1, '#A8D4FF');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      [[w*0.2,h*0.25,55,18],[w*0.65,h*0.15,70,20],[w*0.45,h*0.3,40,14]].forEach(([x,y,rx,ry]) => {
+        ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2); ctx.fill();
+      });
+    }
+  },
+  {
+    id: 'rug', label: 'Tapis',
+    draw: (ctx, w, h) => {
+      ctx.fillStyle = '#F0EDE6'; ctx.fillRect(0, 0, w, h);
+      const m = Math.min(w,h)*0.05;
+      ctx.save(); ctx.shadowColor='rgba(0,0,0,0.15)'; ctx.shadowBlur=20; ctx.shadowOffsetY=6;
+      ctx.fillStyle='#FAFAF7';
+      ctx.beginPath(); ctx.roundRect(m,m,w-m*2,h-m*2,10); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle='rgba(200,195,185,0.6)'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.roundRect(m+10,m+10,w-m*2-20,h-m*2-20,7); ctx.stroke();
+      ctx.strokeStyle='rgba(210,205,195,0.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(m+18,m+18,w-m*2-36,h-m*2-36,5); ctx.stroke();
+      ctx.fillStyle='rgba(195,190,180,0.12)';
+      for(let x=m+25;x<w-m-15;x+=9) for(let y=m+25;y<h-m-15;y+=9) {
+        ctx.beginPath(); ctx.arc(x,y,0.9,0,Math.PI*2); ctx.fill();
       }
     }
   }
 ];
 
-function drawBgPreview(canvas, bg, size = 60) {
-  canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  bg.draw(ctx, size, size);
+function drawBgPreview(canvas, bg) {
+  const size = 80; canvas.width = size; canvas.height = size;
+  bg.draw(canvas.getContext('2d'), size, size);
 }
 
 async function applyBackground(file, bgId, opts) {
@@ -299,39 +305,23 @@ async function applyBackground(file, bgId, opts) {
       const W = img.naturalWidth, H = img.naturalHeight;
       const c = document.createElement('canvas'); c.width = W; c.height = H;
       const ctx = c.getContext('2d');
-
-      // 1. Draw background
-      const bg = BACKGROUNDS.find(b => b.id === bgId);
-      if (bg) bg.draw(ctx, W, H);
-      else { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); }
-
-      // 2. Apply image adjustments
-      const offscreen = document.createElement('canvas'); offscreen.width = W; offscreen.height = H;
-      const octx = offscreen.getContext('2d');
+      const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
+      bg.draw(ctx, W, H);
+      const off = document.createElement('canvas'); off.width = W; off.height = H;
+      const octx = off.getContext('2d');
       let f = '';
-      if (opts.brightness > 5) f += `brightness(${1 + (opts.brightness - 5) * 0.025}) `;
-      if (opts.contrast > 5) f += `contrast(${1 + (opts.contrast - 5) * 0.018}) `;
-      if (opts.saturation > 5) f += `saturate(${1 + (opts.saturation - 5) * 0.04}) `;
-      octx.filter = f.trim() || 'none';
-      octx.drawImage(img, 0, 0);
-
-      // 3. Wrinkle smoothing via blur blend
+      if (opts.brightness > 5) f += `brightness(${1+(opts.brightness-5)*0.025}) `;
+      if (opts.contrast > 5) f += `contrast(${1+(opts.contrast-5)*0.018}) `;
+      if (opts.saturation > 5) f += `saturate(${1+(opts.saturation-5)*0.04}) `;
+      octx.filter = f.trim() || 'none'; octx.drawImage(img, 0, 0);
       if (opts.wrinkles > 0) {
-        const blurCanvas = document.createElement('canvas'); blurCanvas.width = W; blurCanvas.height = H;
-        const bctx = blurCanvas.getContext('2d');
-        const blurPx = opts.wrinkles * 0.35;
-        bctx.filter = `blur(${blurPx}px)`;
-        bctx.drawImage(offscreen, 0, 0);
-        octx.globalAlpha = opts.wrinkles / 10 * 0.45;
-        octx.filter = 'none';
-        octx.drawImage(blurCanvas, 0, 0);
-        octx.globalAlpha = 1;
+        const bl = document.createElement('canvas'); bl.width=W; bl.height=H;
+        const bctx = bl.getContext('2d');
+        bctx.filter = `blur(${opts.wrinkles*0.35}px)`; bctx.drawImage(off, 0, 0);
+        octx.globalAlpha = opts.wrinkles/10*0.45; octx.filter='none'; octx.drawImage(bl,0,0); octx.globalAlpha=1;
       }
-
-      // 4. Composite
-      ctx.drawImage(offscreen, 0, 0);
-      URL.revokeObjectURL(url);
-      res(c.toDataURL('image/jpeg', 0.92));
+      ctx.drawImage(off, 0, 0);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.92));
     };
     img.onerror = rej; img.src = url;
   });
@@ -344,7 +334,7 @@ const TR = {
     nav: ['Créer','Retoucher','Connecter','Finances','Bot 🤖','Historique'],
     ni: ['✨','📷','🔗','📊','🤖','📋'],
     C: { nm:"Importez une photo — l'IA génère tout automatiquement", pr:'Fourchette suggérée', df:'⚠️ Défauts détectés', tp:'💡 Conseils', cb:'📋 Copier l\'annonce', cc:'✅ Copié !', nb:'Nouvelle annonce', er:'Erreur lors de la génération.' },
-    R: { ti:'Retouche photo', su:'Ajustez avec les curseurs, choisissez un fond', pi:'Choisir une photo', bt:'✨ Appliquer', going:'Application…', be:'Avant', af:'Après', dl:'⬇️ Télécharger', df:'Défauts détectés :', bg:'Fond d\'arrière-plan', adj:'Ajustements', wrinkles:'Lissage des plis', brightness:'Luminosité', contrast:'Contraste', saturation:'Saturation' },
+    R: { ti:'Retouche photo', su:'Ajustez les curseurs et choisissez un fond', pi:'Choisir une photo', bt:'✨ Appliquer', going:'Application en cours…', be:'Avant', af:'Après', dl:'⬇️ Télécharger', df:'Défauts détectés :', bg:'Fond d\'arrière-plan', adj:'Ajustements photo', wrinkles:'Lissage des plis', brightness:'Luminosité', contrast:'Contraste', saturation:'Saturation' },
     X: { ti:'Automatiser vos ventes', su:'VintedAI × Bleam', tabs:['🔗 Guide','💬 Messages IA','❤️ Favoris','⭐ Astuces'], dl:'Remise aux favoris', sv:'Sauvegarder', sd:'✅ Sauvegardé !', to:'Ton', tfr:'Sympa', tpr:'Pro', tur:'Urgent', gt:'✨ 3 messages', gn:'Génération…', ft:'Contacter un favori', fi:'Article', fp:'Prix (€)', fc:'Message (optionnel)', fy:'Style', ff:'Amical', fd:'Remise', fu:'Urgent', gf:'✨ Générer', fr2:'Message prêt :', rg:'Régénérer', hs:'Copiez → Bleam ou Vinted → envoyez.', tips:[{e:'⏱️',h:'Fenêtre des 24h',p:"Contactez dans les 24h : intention d'achat maximale."},{e:'💰',h:'Remise idéale',p:'8–15% déclenche l\'achat sans dévaluer.'},{e:'📸',h:'Photo = 70% de la vente',p:'Fond neutre, lumière naturelle, plusieurs angles.'},{e:'🔁',h:'Républier = visibilité',p:'Tous les 2–3 jours avec Bleam.'},{e:'🏷️',h:'Prix psychologique',p:'19€ > 20€. Finir par 7 ou 9.'}] },
     F: { ti:'Finances & Marges', su:'Suivez achats, ventes et meilleures affaires', ad:'+ Ajouter un article', nm:'Nom', by:'Prix d\'achat (€)', sl:'Prix de vente (€)', pl:'Plateforme', st:'Statut', ss:['En vente','Vendu','Non vendu'], sv:'Sauvegarder', iv:'Investi', ea:'Encaissé', mg:'Marge', ab:'✨ Analyser mes ventes', an:'Analyse…', em:'Aucun article.' },
     B: { ti:'Bot de recherche', su:'Surveille Vinted et alerte sur les meilleures affaires', ak:'Clé API Apify', ap:'Clé gratuite sur apify.com', sa:'Sauvegarder', as:'+ Nouvelle recherche', sl2:'Ce que vous cherchez', sp:'ex: Nike Air Max 90 taille 42', mp:'Budget max (€)', fq:'Fréquence', fs2:['15 min','30 min','1h','2h'], ms:'Score min', ac:'Activer', rs:'Meilleures annonces', vb:'Voir sur Vinted →', nr:'Aucun résultat.', na:'Entrez votre clé Apify.', no:'Notifications activées ✅', nf:'Activer les notifications 🔔', av:'Actif', in:'Inactif', ls:'Dernier scan :' },
@@ -355,88 +345,79 @@ const TR = {
     nav: ['Create','Retouch','Connect','Finances','Bot 🤖','History'],
     ni: ['✨','📷','🔗','📊','🤖','📋'],
     C: { nm:'Import a photo — AI generates everything automatically', pr:'Suggested range', df:'⚠️ Detected defects', tp:'💡 Tips', cb:'📋 Copy listing', cc:'✅ Copied!', nb:'New listing', er:'Generation error.' },
-    R: { ti:'Photo retouch', su:'Adjust with sliders, choose a background', pi:'Choose a photo', bt:'✨ Apply', going:'Applying…', be:'Before', af:'After', dl:'⬇️ Download', df:'Detected defects:', bg:'Background', adj:'Adjustments', wrinkles:'Wrinkle smoothing', brightness:'Brightness', contrast:'Contrast', saturation:'Saturation' },
-    X: { ti:'Automate your sales', su:'VintedAI × Bleam', tabs:['🔗 Guide','💬 AI Messages','❤️ Favorites','⭐ Tips'], dl:'Discount for favorites', sv:'Save', sd:'✅ Saved!', to:'Tone', tfr:'Friendly', tpr:'Pro', tur:'Urgent', gt:'✨ 3 messages', gn:'Generating…', ft:'Message a favorite', fi:'Item', fp:'Price (€)', fc:'Message (optional)', fy:'Style', ff:'Friendly', fd:'Discount', fu:'Urgent', gf:'✨ Generate', fr2:'Message ready:', rg:'Regenerate', hs:'Copy → Bleam or Vinted → send.', tips:[{e:'⏱️',h:'24h window',p:'Contact within 24h for max intent.'},{e:'💰',h:'Ideal discount',p:'8–15% triggers purchase.'},{e:'📸',h:'Photo = 70% of sales',p:'Neutral background, natural light.'},{e:'🔁',h:'Relist = visibility',p:'Every 2–3 days with Bleam.'},{e:'🏷️',h:'Psychological pricing',p:'€19 > €20. Prices ending in 7 or 9.'}] },
+    R: { ti:'Photo retouch', su:'Adjust sliders and choose a background', pi:'Choose a photo', bt:'✨ Apply', going:'Applying…', be:'Before', af:'After', dl:'⬇️ Download', df:'Detected defects:', bg:'Background', adj:'Photo adjustments', wrinkles:'Wrinkle smoothing', brightness:'Brightness', contrast:'Contrast', saturation:'Saturation' },
+    X: { ti:'Automate your sales', su:'VintedAI × Bleam', tabs:['🔗 Guide','💬 AI Messages','❤️ Favorites','⭐ Tips'], dl:'Discount for favorites', sv:'Save', sd:'✅ Saved!', to:'Tone', tfr:'Friendly', tpr:'Pro', tur:'Urgent', gt:'✨ 3 messages', gn:'Generating…', ft:'Message a favorite', fi:'Item', fp:'Price (€)', fc:'Message (optional)', fy:'Style', ff:'Friendly', fd:'Discount', fu:'Urgent', gf:'✨ Generate', fr2:'Message ready:', rg:'Regenerate', hs:'Copy → Bleam or Vinted → send.', tips:[{e:'⏱️',h:'24h window',p:'Contact within 24h.'},{e:'💰',h:'Ideal discount',p:'8–15% triggers purchase.'},{e:'📸',h:'Photo = 70% of sales',p:'Neutral background, natural light.'},{e:'🔁',h:'Relist = visibility',p:'Every 2–3 days with Bleam.'},{e:'🏷️',h:'Psychological pricing',p:'€19 > €20.'}] },
     F: { ti:'Finances & Margins', su:'Track purchases, sales and best deals', ad:'+ Add item', nm:'Name', by:'Buy price (€)', sl:'Sell price (€)', pl:'Platform', st:'Status', ss:['For sale','Sold','Unsold'], sv:'Save', iv:'Invested', ea:'Earned', mg:'Margin', ab:'✨ Analyse my sales', an:'Analysing…', em:'No items yet.' },
     B: { ti:'Search Bot', su:'Monitors Vinted and alerts on best deals', ak:'Apify API Key', ap:'Free key at apify.com', sa:'Save', as:'+ New search', sl2:"What you're looking for", sp:'e.g. Nike Air Max 90 size 42', mp:'Max budget (€)', fq:'Frequency', fs2:['15 min','30 min','1h','2h'], ms:'Min score', ac:'Activate', rs:'Best listings', vb:'View on Vinted →', nr:'No results yet.', na:'Enter your Apify key.', no:'Notifications enabled ✅', nf:'Enable notifications 🔔', av:'Active', in:'Inactive', ls:'Last scan:' },
     H: { ti:'My listings', em:'No listings yet.' }
   }
 };
-const g = (l, s, k) => TR[l]?.[s]?.[k] ?? TR.fr?.[s]?.[k] ?? k;
+const g = (l,s,k) => TR[l]?.[s]?.[k] ?? TR.fr?.[s]?.[k] ?? k;
 
 // ══ DOM ══
 function h(tag, attrs, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
-    if (k === 'className') el.className = v;
-    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
-    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
-    else el.setAttribute(k, v);
+    if (k==='className') el.className=v;
+    else if (k.startsWith('on')&&typeof v==='function') el.addEventListener(k.slice(2).toLowerCase(),v);
+    else if (k==='style'&&typeof v==='object') Object.assign(el.style,v);
+    else el.setAttribute(k,v);
   }
   for (const c of children.flat(99)) {
-    if (c == null || c === false) continue;
-    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    if (c==null||c===false) continue;
+    el.appendChild(typeof c==='string'?document.createTextNode(c):c);
   }
   return el;
 }
-
-function buildDots() {
-  return h('div', { className: 'dots' }, ...[0,1,2].map(i => h('div', { className: 'dot', style: { animation: `dot 1.2s ${i*.18}s infinite ease-in-out` } })));
-}
-
-function buildUZone(preview, label, changeLbl, onFile) {
-  const fi = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
-  fi.addEventListener('change', e => { const f = e.target.files?.[0]; if (f) onFile(f); });
-  const zone = h('div', { className: 'uzone' + (preview ? ' has-img' : ''), style: { minHeight: preview ? 'auto' : '165px' } }, fi);
-  if (preview) {
-    zone.appendChild(h('img', { src: preview, style: { width: '100%', maxHeight: 280, objectFit: 'cover', display: 'block', borderRadius: 12 } }));
-    zone.appendChild(h('div', { style: { position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,.65)', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 } }, changeLbl));
+function buildDots(){return h('div',{className:'dots'},...[0,1,2].map(i=>h('div',{className:'dot',style:{animation:`dot 1.2s ${i*.18}s infinite ease-in-out`}})));}
+function buildUZone(preview,label,changeLbl,onFile){
+  const fi=h('input',{type:'file',accept:'image/*',style:{display:'none'}});
+  fi.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)onFile(f);});
+  const zone=h('div',{className:'uzone'+(preview?' has-img':''),style:{minHeight:preview?'auto':'165px'}},fi);
+  if(preview){
+    zone.appendChild(h('img',{src:preview,style:{width:'100%',maxHeight:280,objectFit:'cover',display:'block',borderRadius:12}}));
+    zone.appendChild(h('div',{style:{position:'absolute',bottom:8,right:8,background:'rgba(0,0,0,.65)',color:'white',fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:99}},changeLbl));
   } else {
-    zone.appendChild(h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '32px 18px' } },
-      h('div', { style: { fontSize: 34 } }, '📷'),
-      h('div', { style: { fontWeight: 700, fontSize: 14 } }, label),
-      h('div', { style: { fontSize: 12, color: 'var(--sub)' } }, 'JPG · PNG · HEIC')
-    ));
+    zone.appendChild(h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:'32px 18px'}},h('div',{style:{fontSize:34}},'📷'),h('div',{style:{fontWeight:700,fontSize:14}},label),h('div',{style:{fontSize:12,color:'var(--sub)'}},'JPG · PNG · HEIC')));
   }
-  zone.addEventListener('click', () => fi.click());
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) onFile(f); });
+  zone.addEventListener('click',()=>fi.click());
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');const f=e.dataTransfer.files[0];if(f?.type.startsWith('image/'))onFile(f);});
   return zone;
 }
-
-function buildSlider(label, val, min, max, onChange) {
-  const valEl = h('span', { className: 'slider-val' }, val.toString());
-  const slider = h('input', { type: 'range', min: min.toString(), max: max.toString(), value: val.toString() });
-  slider.addEventListener('input', () => { valEl.textContent = slider.value; onChange(+slider.value); });
-  return h('div', { className: 'slider-row' },
-    h('div', { className: 'slider-header' },
-      h('span', { className: 'slider-label' }, label),
-      valEl
-    ),
-    slider
-  );
+function buildSlider(label,val,min,max,onChange){
+  const valEl=h('span',{className:'slider-val'},val.toString());
+  const slider=h('input',{type:'range',min:min.toString(),max:max.toString(),value:val.toString()});
+  slider.addEventListener('input',()=>{valEl.textContent=slider.value;onChange(+slider.value);});
+  return h('div',{className:'slider-row'},h('div',{className:'slider-header'},h('span',{className:'slider-label'},label),valEl),slider);
 }
 
-function showNotif(data) {
+// Password field with eye toggle
+function buildPassField(placeholder, id) {
+  const wrap = h('div', { className: 'pass-wrap' });
+  const inp = h('input', { type: 'password', className: 'inp', placeholder, id });
+  const eye = h('button', { type: 'button', className: 'pass-eye' }, '👁');
+  eye.addEventListener('click', () => {
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    eye.textContent = inp.type === 'password' ? '👁' : '🙈';
+  });
+  wrap.appendChild(inp); wrap.appendChild(eye);
+  return { wrap, inp };
+}
+
+function showNotif(data){
   document.querySelector('.nbox')?.remove();
-  document.body.appendChild(h('div', { className: 'nbox' },
-    h('div', { style: { display: 'flex', gap: 10 } },
-      h('div', { style: { fontSize: 20 } }, '🔔'),
-      h('div', {}, h('div', { style: { fontWeight: 700, fontSize: 13, color: 'var(--g)', marginBottom: 2 } }, data.title), h('div', { style: { fontSize: 12, color: 'var(--sub)', lineHeight: 1.5 } }, data.body))
-    )
-  ));
-  setTimeout(() => document.querySelector('.nbox')?.remove(), 4500);
+  document.body.appendChild(h('div',{className:'nbox'},h('div',{style:{display:'flex',gap:10}},h('div',{style:{fontSize:20}},'🔔'),h('div',{},h('div',{style:{fontWeight:700,fontSize:13,color:'var(--g)',marginBottom:2}},data.title),h('div',{style:{fontSize:12,color:'var(--sub)',lineHeight:1.5}},data.body)))));
+  setTimeout(()=>document.querySelector('.nbox')?.remove(),4500);
 }
 
 // ══ AUTH SCREEN ══
 function showAuth() {
   document.getElementById('app').innerHTML = '';
   let mode = 'login';
-
   const screen = h('div', { className: 'auth-screen' });
   const box = h('div', { className: 'auth-box' });
-
   box.appendChild(h('div', { className: 'auth-logo' }, 'VintedAI'));
   box.appendChild(h('div', { className: 'auth-tagline' }, lang === 'fr' ? 'La meilleure façon de vendre sur Vinted' : 'The best way to sell on Vinted'));
 
@@ -448,93 +429,117 @@ function showAuth() {
     h('svg', { width: '18', height: '18', viewBox: '0 0 24 24', innerHTML: '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>' }),
     lang === 'fr' ? 'Continuer avec Google' : 'Continue with Google'
   ));
-
   box.appendChild(h('div', { className: 'divider' }, h('span', {}, lang === 'fr' ? 'ou par email' : 'or by email')));
 
-  // Tabs
   const tabBar = h('div', { className: 'auth-tabs' },
-    h('button', { className: 'auth-tab active', id: 'tab-login', onClick: () => { mode = 'login'; updateTabs(); renderForm(); } }, lang === 'fr' ? 'Se connecter' : 'Login'),
-    h('button', { className: 'auth-tab', id: 'tab-signup', onClick: () => { mode = 'signup'; updateTabs(); renderForm(); } }, lang === 'fr' ? "S'inscrire" : 'Sign up')
+    h('button', { className: 'auth-tab active', id: 'tab-login', onClick: () => { mode='login'; updateTabs(); renderForm(); } }, lang==='fr'?'Se connecter':'Login'),
+    h('button', { className: 'auth-tab', id: 'tab-signup', onClick: () => { mode='signup'; updateTabs(); renderForm(); } }, lang==='fr'?"S'inscrire":'Sign up')
   );
   box.appendChild(tabBar);
 
   function updateTabs() {
-    document.getElementById('tab-login').className = 'auth-tab' + (mode === 'login' ? ' active' : '');
-    document.getElementById('tab-signup').className = 'auth-tab' + (mode === 'signup' ? ' active' : '');
+    document.getElementById('tab-login').className = 'auth-tab'+(mode==='login'?' active':'');
+    document.getElementById('tab-signup').className = 'auth-tab'+(mode==='signup'?' active':'');
   }
 
   const errEl = h('div', { className: 'auth-err', id: 'auth-err' });
   const okEl  = h('div', { className: 'auth-ok',  id: 'auth-ok'  });
   box.appendChild(errEl); box.appendChild(okEl);
-
   const formWrap = h('div', { id: 'auth-form' });
   box.appendChild(formWrap);
 
-  function showErr(msg) { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; }
-  function showOk(msg)  { okEl.textContent = msg;  okEl.style.display = 'block'; errEl.style.display = 'none'; }
+  function showErr(msg) { errEl.textContent=msg; errEl.style.display='block'; okEl.style.display='none'; }
+  function showOk(msg)  { okEl.textContent=msg;  okEl.style.display='block'; errEl.style.display='none'; }
 
   function renderForm() {
-    errEl.style.display = 'none'; okEl.style.display = 'none';
-    formWrap.innerHTML = '';
-    const emailInp = h('input', { type: 'email', className: 'inp', placeholder: 'votre@email.com', style: { marginBottom: 10 } });
-    const passInp  = h('input', { type: 'password', className: 'inp', placeholder: lang === 'fr' ? 'Mot de passe (min. 6 caractères)' : 'Password (min. 6 chars)', style: { marginBottom: 14 } });
-    let nameInp = null;
+    errEl.style.display='none'; okEl.style.display='none';
+    formWrap.innerHTML='';
+
+    const emailInp = h('input', { type:'email', className:'inp', placeholder:'votre@email.com', style:{marginBottom:10} });
+    const { wrap: passWrap, inp: passInp } = buildPassField(lang==='fr'?'Mot de passe (min. 6 caractères)':'Password (min. 6 chars)', 'pass-main');
+    passWrap.style.marginBottom = '6px';
+
+    let nameInp = null, pass2Wrap = null, pass2Inp = null;
+
     if (mode === 'signup') {
-      nameInp = h('input', { type: 'text', className: 'inp', placeholder: lang === 'fr' ? 'Votre prénom' : 'Your first name', style: { marginBottom: 10 } });
-      formWrap.appendChild(h('label', { className: 'lbl' }, lang === 'fr' ? 'Prénom' : 'First name'));
+      nameInp = h('input', { type:'text', className:'inp', placeholder:lang==='fr'?'Votre prénom':'Your first name', style:{marginBottom:10} });
+      formWrap.appendChild(h('label', { className:'lbl' }, lang==='fr'?'Prénom':'First name'));
       formWrap.appendChild(nameInp);
     }
-    formWrap.appendChild(h('label', { className: 'lbl' }, 'Email'));
-    formWrap.appendChild(emailInp);
-    formWrap.appendChild(h('label', { className: 'lbl' }, lang === 'fr' ? 'Mot de passe' : 'Password'));
-    formWrap.appendChild(passInp);
 
-    const submitBtn = h('button', { className: 'btn', onClick: async () => {
+    formWrap.appendChild(h('label', { className:'lbl' }, 'Email'));
+    formWrap.appendChild(emailInp);
+    formWrap.appendChild(h('label', { className:'lbl' }, lang==='fr'?'Mot de passe':'Password'));
+    formWrap.appendChild(passWrap);
+
+    if (mode === 'login') {
+      // Forgot password link
+      const forgotLink = h('span', { className:'forgot-link', onClick: () => showForgotForm() }, lang==='fr'?'Mot de passe oublié ?':'Forgot password?');
+      formWrap.appendChild(forgotLink);
+    }
+
+    if (mode === 'signup') {
+      const { wrap: pw2, inp: pi2 } = buildPassField(lang==='fr'?'Confirmer le mot de passe':'Confirm password', 'pass-confirm');
+      pw2.style.marginBottom = '14px';
+      pass2Wrap = pw2; pass2Inp = pi2;
+      formWrap.appendChild(h('label', { className:'lbl', style:{marginTop:8} }, lang==='fr'?'Confirmer le mot de passe':'Confirm password'));
+      formWrap.appendChild(pass2Wrap);
+    } else {
+      passWrap.style.marginBottom = '14px';
+    }
+
+    const submitBtn = h('button', { className:'btn', onClick: async () => {
       const email = emailInp.value.trim(), pass = passInp.value;
-      if (!email || !pass) { showErr(lang === 'fr' ? 'Remplissez tous les champs.' : 'Fill in all fields.'); return; }
-      if (pass.length < 6) { showErr(lang === 'fr' ? 'Mot de passe trop court (min. 6 caractères).' : 'Password too short (min. 6 chars).'); return; }
-      submitBtn.disabled = true; submitBtn.textContent = '…';
+      if (!email||!pass) { showErr(lang==='fr'?'Remplissez tous les champs.':'Fill in all fields.'); return; }
+      if (pass.length < 6) { showErr(lang==='fr'?'Mot de passe trop court (min. 6 caractères).':'Password too short (min. 6 chars).'); return; }
+      if (mode==='signup' && pass2Inp && pass !== pass2Inp.value) { showErr(lang==='fr'?'Les mots de passe ne correspondent pas.':'Passwords do not match.'); return; }
+      submitBtn.disabled=true; submitBtn.textContent='…';
       try {
-        if (mode === 'login') {
+        if (mode==='login') {
           const { error } = await sb.auth.signInWithPassword({ email, password: pass });
           if (error) throw error;
-          // auth state change will handle redirect
         } else {
-          const { error } = await sb.auth.signUp({
-            email, password: pass,
-            options: {
-              data: { full_name: nameInp?.value || '' },
-              emailRedirectTo: SITE_URL
-            }
-          });
+          const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: nameInp?.value||'' }, emailRedirectTo: SITE_URL } });
           if (error) throw error;
-          showOk(lang === 'fr'
-            ? '✅ Compte créé ! Vérifiez votre email et cliquez sur le lien pour activer votre compte. Vous serez automatiquement redirigé vers le site.'
-            : '✅ Account created! Check your email and click the link to activate your account. You will be automatically redirected to the site.');
+          showOk(lang==='fr'?'✅ Compte créé ! Vérifiez votre email et cliquez sur le lien pour vous connecter. Vous serez automatiquement redirigé vers le site.':'✅ Account created! Check your email and click the link. You will be automatically redirected.');
         }
       } catch (e) {
-        showErr(e.message.includes('Invalid login') ? (lang === 'fr' ? 'Email ou mot de passe incorrect.' : 'Wrong email or password.') : e.message);
+        showErr(e.message.includes('Invalid login')?(lang==='fr'?'Email ou mot de passe incorrect.':'Wrong email or password.'):e.message);
       }
-      submitBtn.disabled = false;
-      submitBtn.textContent = mode === 'login' ? (lang === 'fr' ? 'Se connecter' : 'Login') : (lang === 'fr' ? "Créer le compte" : 'Create account');
-    } }, mode === 'login' ? (lang === 'fr' ? 'Se connecter' : 'Login') : (lang === 'fr' ? "Créer le compte" : 'Create account'));
+      submitBtn.disabled=false;
+      submitBtn.textContent = mode==='login'?(lang==='fr'?'Se connecter':'Login'):(lang==='fr'?'Créer le compte':'Create account');
+    } }, mode==='login'?(lang==='fr'?'Se connecter':'Login'):(lang==='fr'?'Créer le compte':'Create account'));
     formWrap.appendChild(submitBtn);
 
-    // Guest option
-    const guestBox = h('div', { className: 'guest-box' },
-      h('p', {}, lang === 'fr'
-        ? '👋 Vous pouvez aussi utiliser VintedAI <strong>sans vous connecter</strong>. Toutes vos annonces, retouches et données seront disponibles pendant votre session, mais <strong>seront supprimées quand vous fermez la page</strong>. La connexion permet de tout sauvegarder sur votre compte.'
-        : '👋 You can also use VintedAI <strong>without signing in</strong>. All your listings, retouches and data will be available during your session, but <strong>will be deleted when you close the page</strong>. Signing in saves everything to your account.'
-      ),
-      h('button', { className: 'btng', onClick: () => { isGuest = true; currentUser = null; render(); } },
-        lang === 'fr' ? '👤 Continuer sans compte' : '👤 Continue without account'
-      )
-    );
-    // Set innerHTML for strong tags
-    guestBox.querySelector('p').innerHTML = lang === 'fr'
-      ? '👋 Vous pouvez aussi utiliser VintedAI <strong>sans vous connecter</strong>. Toutes vos annonces, retouches et données seront disponibles pendant votre session, mais <strong>seront supprimées quand vous fermez la page</strong>. La connexion permet de tout sauvegarder sur votre compte.'
-      : '👋 You can also use VintedAI <strong>without signing in</strong>. All your listings, retouches and data will be available during your session, but <strong>will be deleted when you close the page</strong>. Signing in saves everything to your account.';
+    // Guest box
+    const guestBox = h('div', { className:'guest-box' });
+    const guestP = h('p', {});
+    guestP.innerHTML = lang==='fr'
+      ? '👋 Vous pouvez utiliser VintedAI <strong>sans vous connecter</strong>. Vos données seront <strong>supprimées à la fermeture de la page</strong>. La connexion permet de tout sauvegarder.'
+      : '👋 You can use VintedAI <strong>without signing in</strong>. Data will be <strong>deleted when you close the page</strong>. Sign in to save everything.';
+    guestBox.appendChild(guestP);
+    guestBox.appendChild(h('button', { className:'btng', onClick: () => { isGuest=true; currentUser=null; render(); } }, lang==='fr'?'👤 Continuer sans compte':'👤 Continue without account'));
     formWrap.appendChild(guestBox);
+  }
+
+  function showForgotForm() {
+    errEl.style.display='none'; okEl.style.display='none';
+    formWrap.innerHTML='';
+    formWrap.appendChild(h('div', { style:{fontWeight:700,fontSize:15,marginBottom:6} }, lang==='fr'?'🔑 Mot de passe oublié':'🔑 Forgot password'));
+    formWrap.appendChild(h('p', { style:{fontSize:13,color:'var(--sub)',marginBottom:14,lineHeight:1.6} }, lang==='fr'?'Entrez votre email, vous recevrez un lien pour réinitialiser votre mot de passe.':'Enter your email, you will receive a reset link.'));
+    const emailInp = h('input', { type:'email', className:'inp', placeholder:'votre@email.com', style:{marginBottom:14} });
+    formWrap.appendChild(emailInp);
+    const sendBtn = h('button', { className:'btn', onClick: async () => {
+      const email = emailInp.value.trim();
+      if (!email) { showErr(lang==='fr'?'Entrez votre email.':'Enter your email.'); return; }
+      sendBtn.disabled=true; sendBtn.textContent='…';
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL+'?reset=true' });
+      if (error) showErr(error.message);
+      else showOk(lang==='fr'?'✅ Email envoyé ! Vérifiez votre boîte mail.':'✅ Email sent! Check your inbox.');
+      sendBtn.disabled=false; sendBtn.textContent=lang==='fr'?'Envoyer le lien':'Send link';
+    } }, lang==='fr'?'Envoyer le lien':'Send link');
+    formWrap.appendChild(sendBtn);
+    formWrap.appendChild(h('span', { style:{fontSize:12,color:'var(--p)',cursor:'pointer',display:'block',marginTop:12,textAlign:'center'}, onClick:()=>renderForm() }, lang==='fr'?'← Retour à la connexion':'← Back to login'));
   }
 
   renderForm();
@@ -544,283 +549,231 @@ function showAuth() {
 
 // ══ MAIN APP ══
 function render() {
-  const app = document.getElementById('app');
-  app.innerHTML = '';
-  app.appendChild(buildShell());
+  document.getElementById('app').innerHTML = '';
+  document.getElementById('app').appendChild(buildShell());
 }
 
 function buildShell() {
-  const labels = TR[lang].nav, icons = TR[lang].ni;
-  const tabs = ['create','retouch','connect','finances','bot','history'];
-  const email = currentUser?.email || '';
-  const initial = email[0]?.toUpperCase() || '?';
-
-  const userEl = isGuest
-    ? h('div', { className: 'guest-badge' }, '👤 ', lang === 'fr' ? 'Mode invité' : 'Guest mode')
-    : h('div', { className: 'ubadge' }, h('div', { className: 'uavatar' }, initial), h('span', { className: 'uemail' }, email));
-
-  const signoutBtn = isGuest
-    ? h('button', { className: 'btng btsm', style: { color: 'var(--warn)', borderColor: 'rgba(245,158,11,.2)', fontSize: 12 }, onClick: () => { isGuest = false; showAuth(); } }, lang === 'fr' ? '🔑 Se connecter' : '🔑 Sign in')
-    : h('button', { className: 'btng btsm', style: { color: 'var(--danger)', borderColor: 'rgba(239,68,68,.2)', fontSize: 12 }, onClick: async () => { await sb.auth.signOut(); } }, lang === 'fr' ? '🚪 Déconnexion' : '🚪 Sign out');
-
-  const sidebar = h('aside', { className: 'sidebar' },
-    h('div', { className: 'logo' }, h('h1', {}, 'VintedAI'), h('p', {}, TR[lang].tagline)),
-    h('nav', { className: 'nav' },
-      ...tabs.map((id, i) => h('button', { className: 'nb' + (currentTab === id ? ' active' : ''), onClick: () => { currentTab = id; render(); } },
-        h('span', { className: 'ic' }, icons[i]), h('span', {}, labels[i])
-      ))
-    ),
-    h('div', { className: 'sfooter' },
-      userEl,
-      buildLangSwitch(),
-      h('button', { className: 'btng btsm', onClick: showInstallModal }, '📲 ' + (lang === 'fr' ? 'Installer' : 'Install')),
-      signoutBtn
-    )
+  const labels=TR[lang].nav, icons=TR[lang].ni;
+  const tabs=['create','retouch','connect','finances','bot','history'];
+  const email=currentUser?.email||'';
+  const initial=email[0]?.toUpperCase()||'?';
+  const userEl=isGuest?h('div',{className:'guest-badge'},'👤 ',lang==='fr'?'Mode invité':'Guest mode'):h('div',{className:'ubadge'},h('div',{className:'uavatar'},initial),h('span',{className:'uemail'},email));
+  const signoutBtn=isGuest?h('button',{className:'btng btsm',style:{color:'var(--warn)',borderColor:'rgba(245,158,11,.2)',fontSize:12},onClick:()=>{isGuest=false;showAuth();}},lang==='fr'?'🔑 Se connecter':'🔑 Sign in'):h('button',{className:'btng btsm',style:{color:'var(--danger)',borderColor:'rgba(239,68,68,.2)',fontSize:12},onClick:async()=>{await sb.auth.signOut();}},lang==='fr'?'🚪 Déconnexion':'🚪 Sign out');
+  const sidebar=h('aside',{className:'sidebar'},
+    h('div',{className:'logo'},h('h1',{},'VintedAI'),h('p',{},TR[lang].tagline)),
+    h('nav',{className:'nav'},...tabs.map((id,i)=>h('button',{className:'nb'+(currentTab===id?' active':''),onClick:()=>{currentTab=id;render();}},h('span',{className:'ic'},icons[i]),h('span',{},labels[i])))),
+    h('div',{className:'sfooter'},userEl,buildLangSwitch(),h('button',{className:'btng btsm',onClick:showInstallModal},'📲 '+(lang==='fr'?'Installer':'Install')),signoutBtn)
   );
-  const main = h('main', { className: 'main' }, buildTab(currentTab));
-  return h('div', { style: { display: 'flex', minHeight: '100vh' } }, sidebar, main);
+  return h('div',{style:{display:'flex',minHeight:'100vh'}},sidebar,h('main',{className:'main'},buildTab(currentTab)));
 }
 
-function buildLangSwitch() {
-  const wrap = h('div', { style: { position: 'relative' } });
-  const btn = h('button', { className: 'btng btsm', style: { justifyContent: 'flex-start', gap: 6 }, onClick: () => {
-    const ex = wrap.querySelector('.ldd'); if (ex) { ex.remove(); return; }
-    const dd = h('div', { className: 'ldd', style: { position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, right: 0, background: '#1a1830', borderRadius: 12, padding: 5, boxShadow: '0 8px 28px rgba(0,0,0,.6)', border: '1px solid var(--border)', zIndex: 300 } },
-      ...['fr','en'].map(l => h('button', { style: { display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '8px 12px', border: 'none', background: l === lang ? 'rgba(139,92,246,.1)' : 'transparent', borderRadius: 8, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif", fontWeight: l === lang ? 700 : 400, fontSize: 13, color: l === lang ? 'var(--p)' : 'var(--text)' },
-        onClick: () => { lang = l; localStorage.setItem('vai_lang', l); render(); }
-      }, l === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'))
-    );
+function buildLangSwitch(){
+  const wrap=h('div',{style:{position:'relative'}});
+  const btn=h('button',{className:'btng btsm',style:{justifyContent:'flex-start',gap:6},onClick:()=>{
+    const ex=wrap.querySelector('.ldd');if(ex){ex.remove();return;}
+    const dd=h('div',{className:'ldd',style:{position:'absolute',bottom:'calc(100% + 4px)',left:0,right:0,background:'#1a1830',borderRadius:12,padding:5,boxShadow:'0 8px 28px rgba(0,0,0,.6)',border:'1px solid var(--border)',zIndex:300}},...['fr','en'].map(l=>h('button',{style:{display:'flex',alignItems:'center',gap:7,width:'100%',padding:'8px 12px',border:'none',background:l===lang?'rgba(139,92,246,.1)':'transparent',borderRadius:8,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",fontWeight:l===lang?700:400,fontSize:13,color:l===lang?'var(--p)':'var(--text)'},onClick:()=>{lang=l;localStorage.setItem('vai_lang',l);render();}},l==='fr'?'🇫🇷 Français':'🇬🇧 English')));
     wrap.appendChild(dd);
-    setTimeout(() => document.addEventListener('click', function f(e) { if (!wrap.contains(e.target)) { dd.remove(); document.removeEventListener('click', f); } }), 50);
-  } }, lang === 'fr' ? '🇫🇷 Français' : '🇬🇧 English', h('span', { style: { marginLeft: 'auto', fontSize: 9, color: 'var(--sub)' } }, '▾'));
-  wrap.appendChild(btn); return wrap;
+    setTimeout(()=>document.addEventListener('click',function f(e){if(!wrap.contains(e.target)){dd.remove();document.removeEventListener('click',f);}}),50);
+  }},lang==='fr'?'🇫🇷 Français':'🇬🇧 English',h('span',{style:{marginLeft:'auto',fontSize:9,color:'var(--sub)'}},'▾'));
+  wrap.appendChild(btn);return wrap;
 }
 
-function buildTab(tab) {
-  if (tab === 'create')   return buildCreate();
-  if (tab === 'retouch')  return buildRetouch();
-  if (tab === 'connect')  return buildConnect();
-  if (tab === 'finances') return buildFinances();
-  if (tab === 'bot')      return buildBot();
-  if (tab === 'history')  return buildHistory();
-  return h('div', {});
+function buildTab(tab){
+  if(tab==='create')   return buildCreate();
+  if(tab==='retouch')  return buildRetouch();
+  if(tab==='connect')  return buildConnect();
+  if(tab==='finances') return buildFinances();
+  if(tab==='bot')      return buildBot();
+  if(tab==='history')  return buildHistory();
+  return h('div',{});
 }
 
-// ══ CREATE ══
-function buildCreate() {
-  let file = null, photoUrl = null, loading = false, result = null, err = '';
+// ══ CREATE — PROMPT ULTRA PROFESSIONNEL ══
+function buildCreate(){
+  let file=null,photoUrl=null,loading=false,result=null,err='';
 
-  const SYSTEM = `Tu es un expert en copywriting Vinted. Tu génères des annonces professionnelles, complètes et engageantes. Tu réponds UNIQUEMENT avec du JSON valide, sans markdown.`;
-  const PROMPT = (isEn) => `Analyse cette photo de vêtement/accessoire et génère une annonce Vinted complète et professionnelle.
+  const SYSTEM=`Tu es le meilleur copywriter Vinted au monde. Tu crées des annonces exceptionnelles qui se vendent en moins de 24h. Tes descriptions sont détaillées, professionnelles, engageantes et honnêtes. Tu réponds UNIQUEMENT avec du JSON valide, sans markdown, sans texte avant ou après.`;
 
-Détecte depuis la photo : marque, type d'article, couleur(s), matière, taille estimée, état, défauts visibles, style, saison.
+  const PROMPT=(isEn)=>`Analyse cette photo de vêtement/accessoire avec précision et génère une annonce Vinted EXCEPTIONNELLE.
 
-Génère :
-- Titre : accrocheur, précis, max 60 caractères
-- Prix : juste par rapport au marché Vinted
-- Description : 4 paragraphes structurés :
-  * ¶1 : Description générale enthousiaste (style, look, occasion d'utilisation)
-  * ¶2 : Détails techniques précis (matière, coupe, caractéristiques spécifiques)  
-  * ¶3 : État honnête et détaillé, défauts mentionnés clairement si existants
-  * ¶4 : Informations pratiques (taille, livraison rapide, n'hésitez pas à poser des questions)
-- Hashtags : 6-8 hashtags populaires et pertinents
+ANALYSE VISUELLE COMPLÈTE :
+- Identifie la marque exacte (logos, étiquettes, badges, broderies, style reconnaissable)
+- Type d'article précis et catégorie
+- Couleur(s) exacte(s) et nuance
+- Matière apparente (coton, denim, laine, cuir, synthétique, velours...)
+- Coupe et fit (oversized, slim, regular, relaxed...)
+- État réel et honnête (neuf, très bon, bon état...)
+- Défauts visibles (IMPORTANT : sois honnête, c'est légalement obligatoire)
+- Style (streetwear, casual, chic, sportswear, vintage, workwear...)
+- Saison(s) recommandée(s)
+- Taille estimée si visible
 
-Langue : ${isEn ? 'English' : 'Français'}
+GÉNÈRE UNE ANNONCE PREMIUM :
+- Titre : ultra accrocheur et SEO optimisé, max 60 caractères, inclut marque + type + couleur/style clé
+- Prix : juste et compétitif selon le marché Vinted actuel pour ce type d'article
+- Description PREMIUM en ${isEn?'English':'Français'} avec exactement 4 paragraphes séparés par \\n\\n :
+  * Paragraphe 1 (ACCROCHE) : Présentation enthousiaste et vendeuse. Met en valeur le style, l'occasion, le "wow factor". Donne envie.
+  * Paragraphe 2 (DÉTAILS TECHNIQUES) : Matière, coupe, caractéristiques spécifiques, finitions, petits détails qui font la différence. Sois précis et expert.
+  * Paragraphe 3 (ÉTAT HONNÊTE) : État détaillé et transparent. Si des défauts existent, les mentionner clairement. Si parfait état, le valoriser.
+  * Paragraphe 4 (PRATIQUE) : Taille, conseils d'entretien si pertinent, livraison soignée, réponse rapide aux questions, autres annonces disponibles.
+- 6-8 hashtags très populaires sur Vinted
 
-JSON uniquement (pas de markdown) :
-{"title":"...","price":0,"priceMin":0,"priceMax":0,"brand":"...","size":"...","condition":"...","material":"...","color":"...","description":"¶1\\n\\n¶2\\n\\n¶3\\n\\n¶4","defects":[],"tips":["...","...","..."],"hashtags":"#tag1 #tag2 #tag3 #tag4 #tag5 #tag6"}`;
+JSON UNIQUEMENT (pas de markdown, pas d'explication) :
+{"title":"...","price":0,"priceMin":0,"priceMax":0,"brand":"...","size":"...","condition":"...","material":"...","color":"...","style":"...","description":"¶1\\n\\n¶2\\n\\n¶3\\n\\n¶4","defects":[],"tips":["...","...","..."],"hashtags":"#tag1 #tag2 #tag3 #tag4 #tag5 #tag6"}`;
 
-  const wrap = h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
-    h('div', {}, h('div', { className: 'stitle' }, '✨ ' + (lang === 'fr' ? 'Créer une annonce' : 'Create a listing')), h('div', { className: 'ssub' }, g(lang, 'C', 'nm')))
-  );
-  const photoCard  = h('div', { className: 'card', style: { padding: 0, overflow: 'hidden' } });
-  const resultCard = h('div', { className: 'card', style: { display: 'none' } });
-  wrap.appendChild(photoCard); wrap.appendChild(resultCard);
+  const wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:14}},h('div',{},h('div',{className:'stitle'},'✨ '+(lang==='fr'?'Créer une annonce':'Create a listing')),h('div',{className:'ssub'},g(lang,'C','nm'))));
+  const photoCard=h('div',{className:'card',style:{padding:0,overflow:'hidden'}});
+  const resultCard=h('div',{className:'card',style:{display:'none'}});
+  wrap.appendChild(photoCard);wrap.appendChild(resultCard);
 
-  function redrawPhoto() {
-    photoCard.innerHTML = '';
-    if (loading && photoUrl) {
-      photoCard.appendChild(h('div', { className: 'swrap' },
-        h('img', { src: photoUrl, style: { width: '100%', maxHeight: 280, objectFit: 'cover', display: 'block', filter: 'brightness(.88)' } }),
-        h('div', { className: 'sline' }),
-        h('div', { style: { position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center' } },
-          h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(0,0,0,.72)', borderRadius: 99, padding: '5px 14px' } },
-            h('div', { style: { width: 6, height: 6, borderRadius: '50%', background: 'var(--g)', animation: 'pulse 1s infinite' } }),
-            h('span', { style: { fontSize: 12, color: 'var(--g)', fontWeight: 700 } }, lang === 'fr' ? 'Analyse IA en cours…' : 'AI analysing…')
+  function redrawPhoto(){
+    photoCard.innerHTML='';
+    if(loading&&photoUrl){
+      photoCard.appendChild(h('div',{className:'swrap'},
+        h('img',{src:photoUrl,style:{width:'100%',maxHeight:280,objectFit:'cover',display:'block',filter:'brightness(.88)'}}),
+        h('div',{className:'sline'}),
+        h('div',{style:{position:'absolute',bottom:10,left:0,right:0,textAlign:'center'}},
+          h('span',{style:{display:'inline-flex',alignItems:'center',gap:7,background:'rgba(0,0,0,.72)',borderRadius:99,padding:'5px 14px'}},
+            h('div',{style:{width:6,height:6,borderRadius:'50%',background:'var(--g)',animation:'pulse 1s infinite'}}),
+            h('span',{style:{fontSize:12,color:'var(--g)',fontWeight:700}},lang==='fr'?'Génération de l\'annonce professionnelle…':'Generating professional listing…')
           )
         )
       ));
-      photoCard.appendChild(h('div', { style: { padding: '12px 18px' } }, h('div', { className: 'pbar' }, h('div', { className: 'pbf', style: { width: '65%' } }))));
+      photoCard.appendChild(h('div',{style:{padding:'12px 18px'}},h('div',{className:'pbar'},h('div',{className:'pbf',style:{width:'65%'}}))));
     } else {
-      photoCard.appendChild(buildUZone(photoUrl, lang === 'fr' ? 'Déposer une photo ici' : 'Drop a photo here', lang === 'fr' ? 'Changer' : 'Change', (f) => {
-        file = f; photoUrl = URL.createObjectURL(f); err = ''; result = null; redrawPhoto(); redrawResult(); setTimeout(doGen, 80);
+      photoCard.appendChild(buildUZone(photoUrl,lang==='fr'?'Déposer une photo ici':'Drop a photo here',lang==='fr'?'Changer':'Change',(f)=>{
+        file=f;photoUrl=URL.createObjectURL(f);err='';result=null;redrawPhoto();redrawResult();setTimeout(doGen,80);
       }));
     }
-    if (err) photoCard.appendChild(h('div', { className: 'ebox', style: { margin: '0 14px 14px' } }, err));
-    if (!photoUrl && !loading) photoCard.appendChild(h('div', { style: { padding: '0 18px 18px', textAlign: 'center' } }, h('p', { style: { fontSize: 13, color: 'var(--sub)', lineHeight: 1.65 } }, lang === 'fr' ? "L'IA analyse la photo et génère automatiquement une annonce professionnelle complète." : 'AI analyses the photo and automatically generates a complete professional listing.')));
+    if(err) photoCard.appendChild(h('div',{className:'ebox',style:{margin:'0 14px 14px'}},err));
+    if(!photoUrl&&!loading) photoCard.appendChild(h('div',{style:{padding:'0 18px 18px',textAlign:'center'}},h('p',{style:{fontSize:13,color:'var(--sub)',lineHeight:1.65}},lang==='fr'?"L'IA analyse la photo et génère automatiquement une annonce professionnelle complète — titre, description 4 paragraphes, prix juste, hashtags.":'AI analyses the photo and automatically generates a complete professional listing.')));
   }
 
-  function redrawResult() {
-    resultCard.innerHTML = '';
-    if (!result) { resultCard.style.display = 'none'; return; }
-    resultCard.style.display = 'block';
-    if (result.photoUrl) resultCard.appendChild(h('img', { src: result.photoUrl, style: { width: '100%', borderRadius: 12, marginBottom: 14, maxHeight: 260, objectFit: 'cover' } }));
-    resultCard.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 } },
-      h('div', { style: { flex: 1 } },
-        h('div', { style: { fontWeight: 800, fontSize: 17, lineHeight: 1.35, marginBottom: 8 } }, result.title || ''),
-        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6 } },
-          ...[result.brand, result.size, result.condition, result.material, result.color].filter(Boolean).map(tag =>
-            h('span', { style: { fontSize: 11, background: 'rgba(139,92,246,.12)', color: '#c4b5fd', padding: '3px 9px', borderRadius: 99, fontWeight: 600 } }, tag)
-          )
-        )
+  function redrawResult(){
+    resultCard.innerHTML='';
+    if(!result){resultCard.style.display='none';return;}
+    resultCard.style.display='block';
+    if(result.photoUrl) resultCard.appendChild(h('img',{src:result.photoUrl,style:{width:'100%',borderRadius:12,marginBottom:14,maxHeight:260,objectFit:'cover'}}));
+    resultCard.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:10,marginBottom:10}},
+      h('div',{style:{flex:1}},
+        h('div',{style:{fontWeight:800,fontSize:17,lineHeight:1.35,marginBottom:8}},result.title||''),
+        h('div',{style:{display:'flex',flexWrap:'wrap',gap:6}},...[result.brand,result.size,result.condition,result.material,result.color,result.style].filter(Boolean).map(tag=>h('span',{style:{fontSize:11,background:'rgba(139,92,246,.12)',color:'#c4b5fd',padding:'3px 9px',borderRadius:99,fontWeight:600}},tag)))
       ),
-      h('div', { className: 'ppill' }, (result.price || '?') + '€')
+      h('div',{className:'ppill'},(result.price||'?')+'€')
     ));
-    resultCard.appendChild(h('div', { style: { fontSize: 12, color: 'var(--sub)', marginBottom: 16 } }, g(lang,'C','pr') + ' : ' + (result.priceMin||'?') + '€ – ' + (result.priceMax||'?') + '€'));
-    const descWrap = h('div', { style: { background: 'rgba(255,255,255,.03)', borderRadius: 13, padding: 16, marginBottom: 13, border: '1px solid rgba(255,255,255,.06)' } });
-    (result.description || '').split('\n\n').filter(Boolean).forEach((p, i, arr) => {
-      descWrap.appendChild(h('p', { style: { fontSize: 14, lineHeight: 1.85, color: i === 0 ? 'var(--text)' : '#ccc8ff', marginBottom: i < arr.length - 1 ? 12 : 0 } }, p));
+    resultCard.appendChild(h('div',{style:{fontSize:12,color:'var(--sub)',marginBottom:16}},g(lang,'C','pr')+' : '+(result.priceMin||'?')+'€ – '+(result.priceMax||'?')+'€'));
+    const descWrap=h('div',{style:{background:'rgba(255,255,255,.03)',borderRadius:13,padding:16,marginBottom:13,border:'1px solid rgba(255,255,255,.06)'}});
+    (result.description||'').split('\n\n').filter(Boolean).forEach((p,i,arr)=>{
+      descWrap.appendChild(h('p',{style:{fontSize:14,lineHeight:1.85,color:i===0?'var(--text)':'#ccc8ff',marginBottom:i<arr.length-1?12:0}},p));
     });
     resultCard.appendChild(descWrap);
-    resultCard.appendChild(h('div', { style: { fontSize: 13, color: 'var(--p)', fontWeight: 600, marginBottom: 13 } }, result.hashtags || ''));
-    if (result.defects?.length) {
-      const db = h('div', { style: { background: 'rgba(245,158,11,.07)', border: '1px solid rgba(245,158,11,.22)', borderRadius: 11, padding: 11, marginBottom: 11 } }, h('div', { style: { fontWeight: 700, fontSize: 12, color: '#fcd34d', marginBottom: 5 } }, g(lang,'C','df')));
-      result.defects.forEach(d => db.appendChild(h('div', { style: { fontSize: 13, color: '#fde68a' } }, '• ' + d)));
+    resultCard.appendChild(h('div',{style:{fontSize:13,color:'var(--p)',fontWeight:600,marginBottom:13}},result.hashtags||''));
+    if(result.defects?.length){
+      const db=h('div',{style:{background:'rgba(245,158,11,.07)',border:'1px solid rgba(245,158,11,.22)',borderRadius:11,padding:11,marginBottom:11}},h('div',{style:{fontWeight:700,fontSize:12,color:'#fcd34d',marginBottom:5}},g(lang,'C','df')));
+      result.defects.forEach(d=>db.appendChild(h('div',{style:{fontSize:13,color:'#fde68a'}},'• '+d)));
       resultCard.appendChild(db);
     }
-    if (result.tips?.length) {
-      const tb = h('div', { style: { background: 'rgba(16,185,129,.07)', borderRadius: 11, padding: 11, marginBottom: 15 } }, h('div', { style: { fontWeight: 700, fontSize: 12, color: 'var(--g)', marginBottom: 5 } }, g(lang,'C','tp')));
-      result.tips.forEach(t => tb.appendChild(h('div', { style: { fontSize: 13, color: '#a7f3d0' } }, '• ' + t)));
+    if(result.tips?.length){
+      const tb=h('div',{style:{background:'rgba(16,185,129,.07)',borderRadius:11,padding:11,marginBottom:15}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--g)',marginBottom:5}},g(lang,'C','tp')));
+      result.tips.forEach(t=>tb.appendChild(h('div',{style:{fontSize:13,color:'#a7f3d0'}},'• '+t)));
       resultCard.appendChild(tb);
     }
-    const copyBtn = h('button', { className: 'btn', style: { flex: 1 }, onClick: () => {
-      navigator.clipboard.writeText((result.title||'') + '\n\n' + (result.description||'') + '\n\n' + (result.hashtags||''));
-      copyBtn.textContent = g(lang,'C','cc'); setTimeout(() => copyBtn.textContent = g(lang,'C','cb'), 2200);
-    } }, g(lang,'C','cb'));
-    const newBtn = h('button', { className: 'btng', style: { flex: 1 }, onClick: () => { file=null; if(photoUrl)URL.revokeObjectURL(photoUrl); photoUrl=null; result=null; err=''; redrawPhoto(); redrawResult(); } }, g(lang,'C','nb'));
-    resultCard.appendChild(h('div', { style: { display: 'flex', gap: 9 } }, copyBtn, newBtn));
+    const copyBtn=h('button',{className:'btn',style:{flex:1},onClick:()=>{
+      navigator.clipboard.writeText((result.title||'')+'\n\n'+(result.description||'')+'\n\n'+(result.hashtags||''));
+      copyBtn.textContent=g(lang,'C','cc');setTimeout(()=>copyBtn.textContent=g(lang,'C','cb'),2200);
+    }},g(lang,'C','cb'));
+    const newBtn=h('button',{className:'btng',style:{flex:1},onClick:()=>{file=null;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=null;result=null;err='';redrawPhoto();redrawResult();}},g(lang,'C','nb'));
+    resultCard.appendChild(h('div',{style:{display:'flex',gap:9}},copyBtn,newBtn));
   }
 
-  async function doGen() {
-    if (!file || loading) return;
-    loading = true; redrawPhoto();
-    try {
-      const { b64, mt, dataUrl } = await compressImg(file);
-      const raw = await callGroq(
-        [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:' + mt + ';base64,' + b64 } }, { type: 'text', text: PROMPT(lang === 'en') }] }],
-        SYSTEM, 1400, true
-      );
-      const parsed = pJ(raw);
-      try { await dbInsert('listings', { title: parsed.title, price: parsed.price, price_min: parsed.priceMin, price_max: parsed.priceMax, description: parsed.description, hashtags: parsed.hashtags, defects: parsed.defects || [], tips: parsed.tips || [], photo_url: dataUrl }); } catch (_) {}
-      result = { ...parsed, photoUrl: dataUrl };
-    } catch (e) { console.error(e); err = g(lang,'C','er') + '\n' + e.message; }
-    loading = false; redrawPhoto(); redrawResult();
+  async function doGen(){
+    if(!file||loading)return;
+    loading=true;redrawPhoto();
+    try{
+      const{b64,mt,dataUrl}=await compressImg(file);
+      const raw=await callGroq([{role:'user',content:[{type:'image_url',image_url:{url:'data:'+mt+';base64,'+b64}},{type:'text',text:PROMPT(lang==='en')}]}],SYSTEM,1500,true);
+      const parsed=pJ(raw);
+      try{await dbInsert('listings',{title:parsed.title,price:parsed.price,price_min:parsed.priceMin,price_max:parsed.priceMax,description:parsed.description,hashtags:parsed.hashtags,defects:parsed.defects||[],tips:parsed.tips||[],photo_url:dataUrl});}catch(_){}
+      result={...parsed,photoUrl:dataUrl};
+    }catch(e){console.error(e);err=g(lang,'C','er')+'\n'+e.message;}
+    loading=false;redrawPhoto();redrawResult();
   }
 
-  redrawPhoto(); redrawResult();
+  redrawPhoto();redrawResult();
   return wrap;
 }
 
-// ══ RETOUCH — avec curseurs et fonds ══
-function buildRetouch() {
-  let file = null, preview = null, loading = false, result = null, slide = 50, dragging = false;
-  let selectedBg = 'white';
-  let opts = { wrinkles: 0, brightness: 5, contrast: 5, saturation: 5 };
+// ══ RETOUCH ══
+function buildRetouch(){
+  let file=null,preview=null,loading=false,result=null,slide=50,dragging=false;
+  let selectedBg='white';
+  let opts={wrinkles:0,brightness:5,contrast:5,saturation:5};
 
-  const wrap = h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
-    h('div', {}, h('div', { className: 'stitle' }, g(lang,'R','ti')), h('div', { className: 'ssub' }, g(lang,'R','su')))
-  );
-  const photoCard = h('div', { className: 'card', style: { padding: 0, overflow: 'hidden' } });
-  const controlCard = h('div', { className: 'card', style: { display: 'none' } });
-  const resWrap = h('div', { style: { display: 'none' } });
-  wrap.appendChild(photoCard); wrap.appendChild(controlCard); wrap.appendChild(resWrap);
+  const wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:14}},h('div',{},h('div',{className:'stitle'},g(lang,'R','ti')),h('div',{className:'ssub'},g(lang,'R','su'))));
+  const photoCard=h('div',{className:'card',style:{padding:0,overflow:'hidden'}});
+  const controlCard=h('div',{className:'card',style:{display:'none'}});
+  const resWrap=h('div',{style:{display:'none'}});
+  wrap.appendChild(photoCard);wrap.appendChild(controlCard);wrap.appendChild(resWrap);
 
-  function redrawPhoto() {
-    photoCard.innerHTML = '';
-    if (loading && preview) {
-      photoCard.appendChild(h('div', { style: { position: 'relative', overflow: 'hidden', borderRadius: 14 } },
-        h('img', { src: preview, style: { width: '100%', maxHeight: 280, objectFit: 'cover', display: 'block', borderRadius: 14, animation: 'filterAnim 2s ease forwards' } }),
-        h('div', { style: { position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center' } },
-          h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(0,0,0,.7)', borderRadius: 99, padding: '5px 14px' } },
-            h('div', { style: { width: 13, height: 13, border: '2px solid var(--g)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' } }),
-            h('span', { style: { fontSize: 12, color: 'var(--g)', fontWeight: 700 } }, g(lang,'R','going'))
+  function redrawPhoto(){
+    photoCard.innerHTML='';
+    if(loading&&preview){
+      photoCard.appendChild(h('div',{style:{position:'relative',overflow:'hidden',borderRadius:14}},
+        h('img',{src:preview,style:{width:'100%',maxHeight:280,objectFit:'cover',display:'block',borderRadius:14,animation:'filterAnim 2s ease forwards'}}),
+        h('div',{style:{position:'absolute',bottom:10,left:0,right:0,textAlign:'center'}},
+          h('span',{style:{display:'inline-flex',alignItems:'center',gap:7,background:'rgba(0,0,0,.7)',borderRadius:99,padding:'5px 14px'}},
+            h('div',{style:{width:13,height:13,border:'2px solid var(--g)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}),
+            h('span',{style:{fontSize:12,color:'var(--g)',fontWeight:700}},g(lang,'R','going'))
           )
         )
       ));
     } else {
-      photoCard.appendChild(buildUZone(preview, g(lang,'R','pi'), lang === 'fr' ? 'Changer' : 'Change', (f) => {
-        file = f; preview = URL.createObjectURL(f); result = null; redrawPhoto(); redrawControls(); redrawResult();
+      photoCard.appendChild(buildUZone(preview,g(lang,'R','pi'),lang==='fr'?'Changer':'Change',(f)=>{
+        file=f;preview=URL.createObjectURL(f);result=null;redrawPhoto();redrawControls();redrawResult();
       }));
     }
   }
 
-  function redrawControls() {
-    controlCard.innerHTML = '';
-    if (!preview || loading || result) { controlCard.style.display = 'none'; return; }
-    controlCard.style.display = 'block';
-
-    // Adjustments section
-    controlCard.appendChild(h('div', { style: { fontWeight: 700, fontSize: 13, marginBottom: 14, color: 'var(--text)' } }, g(lang,'R','adj')));
-
-    const slidersWrap = h('div', {});
-    function addSlider(key, label) {
-      slidersWrap.appendChild(buildSlider(label, opts[key], 0, 10, v => { opts[key] = v; }));
-    }
-    addSlider('wrinkles', g(lang,'R','wrinkles'));
-    addSlider('brightness', g(lang,'R','brightness'));
-    addSlider('contrast', g(lang,'R','contrast'));
-    addSlider('saturation', g(lang,'R','saturation'));
-    controlCard.appendChild(slidersWrap);
-
-    // Background section
-    controlCard.appendChild(h('div', { style: { fontWeight: 700, fontSize: 13, margin: '18px 0 10px', color: 'var(--text)' } }, g(lang,'R','bg')));
-    const bgGrid = h('div', { className: 'bg-grid' });
-    BACKGROUNDS.forEach(bg => {
-      const item = h('div', { className: 'bg-item' + (selectedBg === bg.id ? ' selected' : ''), onClick: () => {
-        selectedBg = bg.id;
-        document.querySelectorAll('.bg-item').forEach(el => el.classList.remove('selected'));
-        item.classList.add('selected');
-      } });
-      const canvas = h('canvas', { className: 'bg-canvas', title: bg.label });
+  function redrawControls(){
+    controlCard.innerHTML='';
+    if(!preview||loading||result){controlCard.style.display='none';return;}
+    controlCard.style.display='block';
+    controlCard.appendChild(h('div',{style:{fontWeight:700,fontSize:13,marginBottom:14,color:'var(--text)'}},g(lang,'R','adj')));
+    [['wrinkles',g(lang,'R','wrinkles')],['brightness',g(lang,'R','brightness')],['contrast',g(lang,'R','contrast')],['saturation',g(lang,'R','saturation')]].forEach(([key,label])=>{
+      controlCard.appendChild(buildSlider(label,opts[key],0,10,v=>{opts[key]=v;}));
+    });
+    controlCard.appendChild(h('div',{style:{fontWeight:700,fontSize:13,margin:'18px 0 10px',color:'var(--text)'}},g(lang,'R','bg')));
+    const bgGrid=h('div',{className:'bg-grid'});
+    BACKGROUNDS.forEach(bg=>{
+      const item=h('div',{className:'bg-item'+(selectedBg===bg.id?' selected':''),onClick:()=>{
+        selectedBg=bg.id;document.querySelectorAll('.bg-item').forEach(el=>el.classList.remove('selected'));item.classList.add('selected');
+      }});
+      const canvas=h('canvas',{className:'bg-canvas',title:bg.label});
       item.appendChild(canvas);
-      // Label
-      item.appendChild(h('div', { style: { fontSize: 10, fontWeight: 600, color: 'var(--sub)', textAlign: 'center', padding: '4px 2px', background: 'rgba(0,0,0,.4)' } }, bg.label));
+      item.appendChild(h('div',{className:'bg-lbl'},bg.label));
       bgGrid.appendChild(item);
-      // Draw preview
-      setTimeout(() => drawBgPreview(canvas, bg, 80), 0);
+      setTimeout(()=>drawBgPreview(canvas,bg),0);
     });
     controlCard.appendChild(bgGrid);
-
-    controlCard.appendChild(h('button', { className: 'btn', style: { marginTop: 18 }, onClick: doProcess }, g(lang,'R','bt')));
+    controlCard.appendChild(h('button',{className:'btn',style:{marginTop:18},onClick:doProcess},g(lang,'R','bt')));
   }
 
-  function redrawResult() {
-    resWrap.innerHTML = '';
-    if (!result || loading) { resWrap.style.display = 'none'; return; }
-    resWrap.style.display = 'block';
-
-    const cw = h('div', { className: 'cwrap' });
-    const afterImg  = h('img', { src: result.after,  style: { width: '100%', maxHeight: 340, objectFit: 'cover', display: 'block', borderRadius: 14 } });
-    const beforeDiv = h('div', { style: { position: 'absolute', top: 0, left: 0, width: slide+'%', height: '100%', overflow: 'hidden' } },
-      h('img', { src: result.before, style: { width: slide>0?(100*100/slide)+'%':'0%', maxWidth: 'none', maxHeight: 340, objectFit: 'cover', display: 'block' } })
-    );
-    const handle = h('div', { style: { position: 'absolute', top: 0, left: slide+'%', width: 2, height: '100%', background: 'white', transform: 'translateX(-50%)', boxShadow: '0 0 8px rgba(0,0,0,.5)', zIndex: 5 } },
-      h('div', { style: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 32, height: 32, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, boxShadow: '0 2px 8px rgba(0,0,0,.35)' } }, '⇄')
-    );
-    function onMove(e) {
-      if (!dragging) return;
-      const rect = cw.getBoundingClientRect(), x = e.touches?.[0]?.clientX ?? e.clientX;
-      slide = Math.min(100, Math.max(0, (x - rect.left) / rect.width * 100));
-      beforeDiv.style.width = slide+'%'; handle.style.left = slide+'%';
-      const bi = beforeDiv.querySelector('img'); if (bi) bi.style.width = slide>0?(100*100/slide)+'%':'0%';
-    }
-    ['mousedown','touchstart'].forEach(ev => cw.addEventListener(ev, () => dragging=true));
-    ['mouseup','touchend','mouseleave'].forEach(ev => cw.addEventListener(ev, () => dragging=false));
-    ['mousemove','touchmove'].forEach(ev => cw.addEventListener(ev, onMove));
-    cw.appendChild(afterImg); cw.appendChild(beforeDiv); cw.appendChild(handle);
+  function redrawResult(){
+    resWrap.innerHTML='';
+    if(!result||loading){resWrap.style.display='none';return;}
+    resWrap.style.display='block';
+    const cw=h('div',{className:'cwrap'});
+    const afterImg=h('img',{src:result.after,style:{width:'100%',maxHeight:340,objectFit:'cover',display:'block',borderRadius:14}});
+    const beforeDiv=h('div',{style:{position:'absolute',top:0,left:0,width:slide+'%',height:'100%',overflow:'hidden'}},h('img',{src:result.before,style:{width:slide>0?(100*100/slide)+'%':'0%',maxWidth:'none',maxHeight:340,objectFit:'cover',display:'block'}}));
+    const handle=h('div',{style:{position:'absolute',top:0,left:slide+'%',width:2,height:'100%',background:'white',transform:'translateX(-50%)',boxShadow:'0 0 8px rgba(0,0,0,.5)',zIndex:5}},h('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:32,height:32,borderRadius:'50%',background:'white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,boxShadow:'0 2px 8px rgba(0,0,0,.35)'}},'⇄'));
+    function onMove(e){if(!dragging)return;const rect=cw.getBoundingClientRect(),x=e.touches?.[0]?.clientX??e.clientX;slide=Math.min(100,Math.max(0,(x-rect.left)/rect.width*100));beforeDiv.style.width=slide+'%';handle.style.left=slide+'%';const bi=beforeDiv.querySelector('img');if(bi)bi.style.width=slide>0?(100*100/slide)+'%':'0%';}
+    ['mousedown','touchstart'].forEach(ev=>cw.addEventListener(ev,()=>dragging=true));
+    ['mouseup','touchend','mouseleave'].forEach(ev=>cw.addEventListener(ev,()=>dragging=false));
+    ['mousemove','touchmove'].forEach(ev=>cw.addEventListener(ev,onMove));
+    cw.appendChild(afterImg);cw.appendChild(beforeDiv);cw.appendChild(handle);
     cw.appendChild(h('div',{style:{position:'absolute',top:9,left:9,background:'rgba(0,0,0,.6)',color:'white',fontSize:11,fontWeight:700,padding:'3px 9px',borderRadius:99}},g(lang,'R','be')));
     cw.appendChild(h('div',{style:{position:'absolute',top:9,right:9,background:'linear-gradient(135deg,var(--p),var(--g))',color:'white',fontSize:11,fontWeight:800,padding:'3px 9px',borderRadius:99}},g(lang,'R','af')));
-
     resWrap.appendChild(h('div',{className:'card',style:{padding:0,overflow:'hidden',marginBottom:14}},cw));
     resWrap.appendChild(h('div',{style:{display:'flex',gap:10,marginBottom:14}},
       h('button',{className:'btng',style:{flex:1},onClick:()=>{result=null;redrawControls();redrawResult();}},lang==='fr'?'🔄 Modifier':'🔄 Edit'),
@@ -828,32 +781,27 @@ function buildRetouch() {
     ));
   }
 
-  async function doProcess() {
-    if (!file || loading) return;
-    loading = true; redrawPhoto(); redrawControls();
-    await new Promise(r => setTimeout(r, 2000));
-    try {
-      const processed = await applyBackground(file, selectedBg, opts);
-      result = { before: preview, after: processed };
-    } catch (e) { console.error(e); }
-    loading = false; redrawPhoto(); redrawControls(); redrawResult();
+  async function doProcess(){
+    if(!file||loading)return;
+    loading=true;redrawPhoto();redrawControls();
+    await new Promise(r=>setTimeout(r,2000));
+    try{
+      const processed=await applyBackground(file,selectedBg,opts);
+      result={before:preview,after:processed};
+    }catch(e){console.error(e);}
+    loading=false;redrawPhoto();redrawControls();redrawResult();
   }
 
-  redrawPhoto(); redrawControls(); redrawResult();
+  redrawPhoto();redrawControls();redrawResult();
   return wrap;
 }
 
 // ══ CONNECT ══
-function buildConnect() {
-  let sec=0, disc=parseInt(localStorage.getItem('vai_disc')||'10'), tone='fr', item='';
-  let fItem='', fPrice='', fCustom='', fTone='ff', fMsg='';
+function buildConnect(){
+  let sec=0,disc=parseInt(localStorage.getItem('vai_disc')||'10'),tone='fr',item='';
+  let fItem='',fPrice='',fCustom='',fTone='ff',fMsg='';
   const wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:14}});
-  wrap.appendChild(h('div',{style:{background:'linear-gradient(135deg,#130f28,#1a1050 55%,#0b2a1a)',borderRadius:18,padding:18,border:'1px solid var(--border)'}},
-    h('div',{style:{display:'flex',gap:10,alignItems:'center'}},
-      h('div',{style:{width:38,height:38,borderRadius:11,background:'rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17}},'🤝'),
-      h('div',{},h('div',{style:{fontWeight:800,fontSize:15}},g(lang,'X','ti')),h('div',{style:{fontSize:11,color:'rgba(255,255,255,.4)'}},g(lang,'X','su')))
-    )
-  ));
+  wrap.appendChild(h('div',{style:{background:'linear-gradient(135deg,#130f28,#1a1050 55%,#0b2a1a)',borderRadius:18,padding:18,border:'1px solid var(--border)'}},h('div',{style:{display:'flex',gap:10,alignItems:'center'}},h('div',{style:{width:38,height:38,borderRadius:11,background:'rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17}},'🤝'),h('div',{},h('div',{style:{fontWeight:800,fontSize:15}},g(lang,'X','ti')),h('div',{style:{fontSize:11,color:'rgba(255,255,255,.4)'}},g(lang,'X','su'))))));
   const tabs=g(lang,'X','tabs');
   const tabBar=h('div',{style:{display:'flex',background:'rgba(255,255,255,.04)',borderRadius:13,padding:3,gap:2}});
   const secW=h('div',{});
@@ -861,96 +809,26 @@ function buildConnect() {
   function rTabs(){Array.from(tabBar.children).forEach((b,i)=>{b.style.fontWeight=sec===i?700:500;b.style.background=sec===i?'rgba(255,255,255,.09)':'transparent';b.style.color=sec===i?'var(--p)':'var(--sub)';})}
   tabs.forEach((lbl,i)=>{tabBar.appendChild(h('button',{style:{flex:1,padding:'8px 2px',borderRadius:10,border:'none',cursor:'pointer',fontFamily:"'DM Sans',sans-serif",fontWeight:sec===i?700:500,fontSize:11,background:sec===i?'rgba(255,255,255,.09)':'transparent',color:sec===i?'var(--p)':'var(--sub)',transition:'all .18s'},onClick:()=>{sec=i;rTabs();rSec();}},lbl));});
   function rSec(){secW.innerHTML='';if(sec===0)secW.appendChild(bGuide());if(sec===1)secW.appendChild(bMessages());if(sec===2)secW.appendChild(bFav());if(sec===3)secW.appendChild(bTips());}
-  function bGuide(){
-    const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});
-    [{ic:'⬇️',h_:lang==='fr'?'1. Installer Bleam':'1. Install Bleam',p_:lang==='fr'?'Extension Chrome gratuite.':'Free Chrome extension.',cta:true},{ic:'🔐',h_:lang==='fr'?'2. Connexion auto':'2. Auto connection',p_:lang==='fr'?'Ouvrez Vinted dans Chrome, cliquez sur Bleam.':'Open Vinted in Chrome, click Bleam.'},{ic:'💬',h_:lang==='fr'?'3. Coller les messages':'3. Paste messages',p_:lang==='fr'?'Générez ici → collez dans Bleam.':'Generate here → paste into Bleam.'},{ic:'🚀',h_:lang==='fr'?'4. Bot actif':'4. Bot active',p_:lang==='fr'?'Bleam envoie automatiquement 24h/24.':'Bleam sends 24/7.'}].forEach(s=>{
-      w.appendChild(h('div',{className:'csm',style:{display:'flex',gap:11}},h('div',{style:{width:38,height:38,borderRadius:11,flexShrink:0,background:'linear-gradient(135deg,var(--p),var(--g))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17}},s.ic),h('div',{},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:2}},s.h_),h('div',{style:{fontSize:12,color:'var(--sub)'}},s.p_),...(s.cta?[h('a',{href:'https://bleam.app',target:'_blank',style:{display:'inline-block',marginTop:7,padding:'5px 13px',borderRadius:8,background:'linear-gradient(135deg,var(--p),var(--g))',color:'white',fontWeight:700,fontSize:12,textDecoration:'none'}},lang==='fr'?'Installer →':'Install →')]:[]))));
-    });
-    const dc=h('div',{className:'card'});dc.appendChild(h('label',{className:'lbl'},g(lang,'X','dl')));
-    const dv=h('div',{style:{width:46,height:34,display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,var(--p),var(--g))',borderRadius:9,fontWeight:800,color:'white',fontSize:14}},disc+'%');
-    const sl=h('input',{type:'range',min:'0',max:'40',value:disc.toString()});sl.addEventListener('input',()=>{disc=+sl.value;dv.textContent=disc+'%';});
-    dc.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:11,marginBottom:8}},sl,dv));
-    const sb2=h('button',{className:'btn',onClick:()=>{localStorage.setItem('vai_disc',disc);sb2.textContent=g(lang,'X','sd');setTimeout(()=>sb2.textContent=g(lang,'X','sv'),2000);}},g(lang,'X','sv'));dc.appendChild(sb2);w.appendChild(dc);return w;
-  }
-  function bMessages(){
-    const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});
-    const mc=h('div',{className:'card'});
-    mc.appendChild(h('label',{className:'lbl'},lang==='fr'?"Type d'article":'Item type'));
-    const iI=h('input',{type:'text',className:'inp',placeholder:lang==='fr'?'jean, manteau…':'jeans, coat…',value:item});iI.addEventListener('input',()=>item=iI.value);mc.appendChild(iI);
-    mc.appendChild(h('label',{className:'lbl',style:{marginTop:12}},g(lang,'X','to')));
-    const tW=h('div',{style:{display:'flex',gap:7}});
-    [['fr',g(lang,'X','tfr'),'😊'],['pr',g(lang,'X','tpr'),'💼'],['ur',g(lang,'X','tur'),'⚡']].forEach(([k,lbl,em])=>{
-      const tb=h('button',{style:{flex:1,padding:'9px 3px',borderRadius:11,border:'none',cursor:'pointer',fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:12,background:tone===k?'linear-gradient(135deg,var(--p),var(--g))':'var(--inp)',color:tone===k?'white':'var(--sub)'}},h('div',{style:{fontSize:16,marginBottom:2}},em),lbl);
-      tb.addEventListener('click',()=>{tone=k;Array.from(tW.children).forEach((b,j)=>{b.style.background=['fr','pr','ur'][j]===k?'linear-gradient(135deg,var(--p),var(--g))':'var(--inp)';b.style.color=['fr','pr','ur'][j]===k?'white':'var(--sub)';});});
-      tW.appendChild(tb);
-    });mc.appendChild(tW);
-    const tW2=h('div',{});
-    const gb=h('button',{className:'btn',style:{marginTop:12},onClick:async()=>{
-      gb.disabled=true;gb.textContent=g(lang,'X','gn');tW2.innerHTML='';
-      try{const tM={fr:'warm and friendly',pr:'professional and concise',ur:'urgent and FOMO-driven'};const raw=await callGroq([{role:'user',content:`Write 3 short Vinted seller messages. Item: ${item||'clothing'}. Tone: ${tM[tone]}. ${disc>0?`Offer ${disc}% discount.`:''} Language: ${lang==='fr'?'French':'English'}. Reply ONLY valid JSON no markdown: {"templates":[{"label":"...","text":"..."},{"label":"...","text":"..."},{"label":"...","text":"..."}],"tip":"..."}`}],'Return only valid JSON.',600,false);
-      const tpls=pJ(raw);tpls.templates?.forEach(tpl=>{tW2.appendChild(h('div',{className:'csm',style:{marginTop:10}},h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:7}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--p)'}},'💬 '+tpl.label),h('button',{style:{padding:'4px 10px',borderRadius:7,border:'none',cursor:'pointer',background:'rgba(139,92,246,.1)',color:'var(--p)',fontWeight:700,fontSize:12},onClick:function(){navigator.clipboard.writeText(tpl.text);this.textContent='✅';setTimeout(()=>this.textContent='📋',2000);}},'📋')),h('div',{style:{fontSize:13,color:'#ccc8ff',lineHeight:1.75,background:'var(--inp)',borderRadius:9,padding:10}},tpl.text)));});
-      if(tpls.tip)tW2.appendChild(h('div',{className:'csm',style:{marginTop:10,background:'rgba(245,158,11,.07)'}},h('div',{style:{fontSize:12,color:'#fcd34d',fontWeight:700,marginBottom:3}},'💡 Pro tip'),h('div',{style:{fontSize:13,color:'#fde68a'}},tpls.tip)));}catch(e){tW2.appendChild(h('div',{className:'ebox'},e.message));}
-      gb.disabled=false;gb.textContent=g(lang,'X','gt');
-    }},g(lang,'X','gt'));mc.appendChild(gb);w.appendChild(mc);w.appendChild(tW2);return w;
-  }
-  function bFav(){
-    const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});
-    const fc=h('div',{className:'card'},h('div',{style:{fontWeight:800,fontSize:16,marginBottom:4}},g(lang,'X','ft')),h('div',{style:{fontSize:13,color:'var(--sub)',marginBottom:13}},lang==='fr'?"Rédigez ou laissez l'IA générer":'Write or let AI generate'));
-    const fiI=h('input',{type:'text',className:'inp',placeholder:'Robe Zara…',style:{marginBottom:10}});fiI.addEventListener('input',()=>fItem=fiI.value);
-    const fpI=h('input',{type:'number',className:'inp',placeholder:'25',style:{marginBottom:10}});fpI.addEventListener('input',()=>fPrice=fpI.value);
-    const fcT=h('textarea',{className:'inp',placeholder:lang==='fr'?"Laissez vide pour l'IA…":'Leave blank for AI…',rows:3,style:{marginBottom:10,resize:'vertical',lineHeight:1.65}});fcT.addEventListener('input',()=>fCustom=fcT.value);
-    fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fi')));fc.appendChild(fiI);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fp')));fc.appendChild(fpI);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fc')));fc.appendChild(fcT);
-    fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fy')));
-    const sw=h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}});
-    [['ff',g(lang,'X','ff')],['fd',g(lang,'X','fd')],['fu',g(lang,'X','fu')]].forEach(([k,lbl])=>{const ch=h('button',{className:'chip'+(fTone===k?' on':'')},lbl);ch.addEventListener('click',()=>{fTone=k;Array.from(sw.children).forEach((b,j)=>b.className='chip'+([['ff'],['fd'],['fu']][j][0]===k?' on':''));});sw.appendChild(ch);});fc.appendChild(sw);
-    const mW=h('div',{});
-    const gb=h('button',{className:'btn',onClick:async()=>{
-      gb.disabled=true;gb.textContent='…';mW.innerHTML='';
-      try{const tM2={ff:'warm and friendly',fd:`friendly with ${disc}% discount`,fu:'urgent'};
-      const pr=fCustom?`Polish this Vinted message. Language: ${lang==='fr'?'French':'English'}. Message: "${fCustom}"${fPrice?` (price: ${fPrice}€)`:''}.Reply ONLY with improved message.`:`Write a Vinted message to someone who favorited a listing. Item: ${fItem||'clothing'}. ${fPrice?`Price: ${fPrice}€.`:''} Tone: ${tM2[fTone]||'friendly'}. Language: ${lang==='fr'?'French':'English'}. Reply ONLY with the message text.`;
-      fMsg=(await callGroq([{role:'user',content:pr}],'Reply only with message text.',250,false)).trim();
-      mW.appendChild(h('div',{className:'card',style:{marginTop:11}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--p)',marginBottom:7}},g(lang,'X','fr2')),h('div',{style:{fontSize:14,color:'#ccc8ff',lineHeight:1.8,background:'var(--inp)',borderRadius:10,padding:11,marginBottom:11,whiteSpace:'pre-wrap'}},fMsg),h('div',{style:{display:'flex',gap:8}},h('button',{className:'btn',style:{flex:1},onClick:function(){navigator.clipboard.writeText(fMsg);this.textContent='✅';setTimeout(()=>this.textContent='📋 Copier',2000);}},'📋 Copier'),h('button',{className:'btng',style:{flex:1},onClick:()=>gb.click()},'🔄 '+g(lang,'X','rg')))));
-      mW.appendChild(h('div',{className:'csm',style:{background:'rgba(245,158,11,.07)'}},h('div',{style:{fontSize:13,color:'#fde68a'}},'💡 '+g(lang,'X','hs'))));}catch(e){mW.appendChild(h('div',{className:'ebox'},e.message));}
-      gb.disabled=false;gb.textContent=g(lang,'X','gf');
-    }},g(lang,'X','gf'));fc.appendChild(gb);w.appendChild(fc);w.appendChild(mW);return w;
-  }
+  function bGuide(){const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});[{ic:'⬇️',h_:lang==='fr'?'1. Installer Bleam':'1. Install Bleam',p_:lang==='fr'?'Extension Chrome gratuite.':'Free Chrome extension.',cta:true},{ic:'🔐',h_:lang==='fr'?'2. Connexion auto':'2. Auto connection',p_:lang==='fr'?'Ouvrez Vinted dans Chrome, cliquez sur Bleam.':'Open Vinted in Chrome, click Bleam.'},{ic:'💬',h_:lang==='fr'?'3. Coller les messages':'3. Paste messages',p_:lang==='fr'?'Générez ici → collez dans Bleam.':'Generate here → paste into Bleam.'},{ic:'🚀',h_:lang==='fr'?'4. Bot actif':'4. Bot active',p_:lang==='fr'?'Bleam envoie automatiquement 24h/24.':'Bleam sends 24/7.'}].forEach(s=>{w.appendChild(h('div',{className:'csm',style:{display:'flex',gap:11}},h('div',{style:{width:38,height:38,borderRadius:11,flexShrink:0,background:'linear-gradient(135deg,var(--p),var(--g))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17}},s.ic),h('div',{},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:2}},s.h_),h('div',{style:{fontSize:12,color:'var(--sub)'}},s.p_),...(s.cta?[h('a',{href:'https://bleam.app',target:'_blank',style:{display:'inline-block',marginTop:7,padding:'5px 13px',borderRadius:8,background:'linear-gradient(135deg,var(--p),var(--g))',color:'white',fontWeight:700,fontSize:12,textDecoration:'none'}},lang==='fr'?'Installer →':'Install →')]:[]))));});
+  const dc=h('div',{className:'card'});dc.appendChild(h('label',{className:'lbl'},g(lang,'X','dl')));const dv=h('div',{style:{width:46,height:34,display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,var(--p),var(--g))',borderRadius:9,fontWeight:800,color:'white',fontSize:14}},disc+'%');const sl=h('input',{type:'range',min:'0',max:'40',value:disc.toString()});sl.addEventListener('input',()=>{disc=+sl.value;dv.textContent=disc+'%';});dc.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:11,marginBottom:8}},sl,dv));const sb2=h('button',{className:'btn',onClick:()=>{localStorage.setItem('vai_disc',disc);sb2.textContent=g(lang,'X','sd');setTimeout(()=>sb2.textContent=g(lang,'X','sv'),2000);}},g(lang,'X','sv'));dc.appendChild(sb2);w.appendChild(dc);return w;}
+  function bMessages(){const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});const mc=h('div',{className:'card'});mc.appendChild(h('label',{className:'lbl'},lang==='fr'?"Type d'article":'Item type'));const iI=h('input',{type:'text',className:'inp',placeholder:lang==='fr'?'jean, manteau…':'jeans, coat…',value:item});iI.addEventListener('input',()=>item=iI.value);mc.appendChild(iI);mc.appendChild(h('label',{className:'lbl',style:{marginTop:12}},g(lang,'X','to')));const tW=h('div',{style:{display:'flex',gap:7}});[['fr',g(lang,'X','tfr'),'😊'],['pr',g(lang,'X','tpr'),'💼'],['ur',g(lang,'X','tur'),'⚡']].forEach(([k,lbl,em])=>{const tb=h('button',{style:{flex:1,padding:'9px 3px',borderRadius:11,border:'none',cursor:'pointer',fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:12,background:tone===k?'linear-gradient(135deg,var(--p),var(--g))':'var(--inp)',color:tone===k?'white':'var(--sub)'}},h('div',{style:{fontSize:16,marginBottom:2}},em),lbl);tb.addEventListener('click',()=>{tone=k;Array.from(tW.children).forEach((b,j)=>{b.style.background=['fr','pr','ur'][j]===k?'linear-gradient(135deg,var(--p),var(--g))':'var(--inp)';b.style.color=['fr','pr','ur'][j]===k?'white':'var(--sub)';});});tW.appendChild(tb);});mc.appendChild(tW);const tW2=h('div',{});const gb=h('button',{className:'btn',style:{marginTop:12},onClick:async()=>{gb.disabled=true;gb.textContent=g(lang,'X','gn');tW2.innerHTML='';try{const tM={fr:'warm and friendly',pr:'professional and concise',ur:'urgent and FOMO-driven'};const raw=await callGroq([{role:'user',content:`Write 3 short Vinted seller messages. Item: ${item||'clothing'}. Tone: ${tM[tone]}. ${disc>0?`Offer ${disc}% discount.`:''} Language: ${lang==='fr'?'French':'English'}. Reply ONLY valid JSON no markdown: {"templates":[{"label":"...","text":"..."},{"label":"...","text":"..."},{"label":"...","text":"..."}],"tip":"..."}`}],'Return only valid JSON.',600,false);const tpls=pJ(raw);tpls.templates?.forEach(tpl=>{tW2.appendChild(h('div',{className:'csm',style:{marginTop:10}},h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:7}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--p)'}},'💬 '+tpl.label),h('button',{style:{padding:'4px 10px',borderRadius:7,border:'none',cursor:'pointer',background:'rgba(139,92,246,.1)',color:'var(--p)',fontWeight:700,fontSize:12},onClick:function(){navigator.clipboard.writeText(tpl.text);this.textContent='✅';setTimeout(()=>this.textContent='📋',2000);}},'📋')),h('div',{style:{fontSize:13,color:'#ccc8ff',lineHeight:1.75,background:'var(--inp)',borderRadius:9,padding:10}},tpl.text)));});if(tpls.tip)tW2.appendChild(h('div',{className:'csm',style:{marginTop:10,background:'rgba(245,158,11,.07)'}},h('div',{style:{fontSize:12,color:'#fcd34d',fontWeight:700,marginBottom:3}},'💡 Pro tip'),h('div',{style:{fontSize:13,color:'#fde68a'}},tpls.tip)));}catch(e){tW2.appendChild(h('div',{className:'ebox'},e.message));}gb.disabled=false;gb.textContent=g(lang,'X','gt');}},g(lang,'X','gt'));mc.appendChild(gb);w.appendChild(mc);w.appendChild(tW2);return w;}
+  function bFav(){const w=h('div',{style:{display:'flex',flexDirection:'column',gap:11}});const fc=h('div',{className:'card'},h('div',{style:{fontWeight:800,fontSize:16,marginBottom:4}},g(lang,'X','ft')),h('div',{style:{fontSize:13,color:'var(--sub)',marginBottom:13}},lang==='fr'?"Rédigez ou laissez l'IA générer":'Write or let AI generate'));const fiI=h('input',{type:'text',className:'inp',placeholder:'Robe Zara…',style:{marginBottom:10}});fiI.addEventListener('input',()=>fItem=fiI.value);const fpI=h('input',{type:'number',className:'inp',placeholder:'25',style:{marginBottom:10}});fpI.addEventListener('input',()=>fPrice=fpI.value);const fcT=h('textarea',{className:'inp',placeholder:lang==='fr'?"Laissez vide pour l'IA…":'Leave blank for AI…',rows:3,style:{marginBottom:10,resize:'vertical',lineHeight:1.65}});fcT.addEventListener('input',()=>fCustom=fcT.value);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fi')));fc.appendChild(fiI);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fp')));fc.appendChild(fpI);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fc')));fc.appendChild(fcT);fc.appendChild(h('label',{className:'lbl'},g(lang,'X','fy')));const sw=h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}});[['ff',g(lang,'X','ff')],['fd',g(lang,'X','fd')],['fu',g(lang,'X','fu')]].forEach(([k,lbl])=>{const ch=h('button',{className:'chip'+(fTone===k?' on':'')},lbl);ch.addEventListener('click',()=>{fTone=k;Array.from(sw.children).forEach((b,j)=>b.className='chip'+([['ff'],['fd'],['fu']][j][0]===k?' on':''));});sw.appendChild(ch);});fc.appendChild(sw);const mW=h('div',{});const gb=h('button',{className:'btn',onClick:async()=>{gb.disabled=true;gb.textContent='…';mW.innerHTML='';try{const tM2={ff:'warm and friendly',fd:`friendly with ${disc}% discount`,fu:'urgent'};const pr=fCustom?`Polish this Vinted message. Language: ${lang==='fr'?'French':'English'}. Message: "${fCustom}"${fPrice?` (price: ${fPrice}€)`:''}.Reply ONLY with improved message.`:`Write a Vinted message to someone who favorited a listing. Item: ${fItem||'clothing'}. ${fPrice?`Price: ${fPrice}€.`:''} Tone: ${tM2[fTone]||'friendly'}. Language: ${lang==='fr'?'French':'English'}. Reply ONLY with the message text.`;fMsg=(await callGroq([{role:'user',content:pr}],'Reply only with message text.',250,false)).trim();mW.appendChild(h('div',{className:'card',style:{marginTop:11}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--p)',marginBottom:7}},g(lang,'X','fr2')),h('div',{style:{fontSize:14,color:'#ccc8ff',lineHeight:1.8,background:'var(--inp)',borderRadius:10,padding:11,marginBottom:11,whiteSpace:'pre-wrap'}},fMsg),h('div',{style:{display:'flex',gap:8}},h('button',{className:'btn',style:{flex:1},onClick:function(){navigator.clipboard.writeText(fMsg);this.textContent='✅';setTimeout(()=>this.textContent='📋 Copier',2000);}},'📋 Copier'),h('button',{className:'btng',style:{flex:1},onClick:()=>gb.click()},'🔄 '+g(lang,'X','rg')))));mW.appendChild(h('div',{className:'csm',style:{background:'rgba(245,158,11,.07)'}},h('div',{style:{fontSize:13,color:'#fde68a'}},'💡 '+g(lang,'X','hs'))));}catch(e){mW.appendChild(h('div',{className:'ebox'},e.message));}gb.disabled=false;gb.textContent=g(lang,'X','gf');}},g(lang,'X','gf'));fc.appendChild(gb);w.appendChild(fc);w.appendChild(mW);return w;}
   function bTips(){const w=h('div',{style:{display:'flex',flexDirection:'column',gap:10}});g(lang,'X','tips').forEach(tip=>w.appendChild(h('div',{className:'csm'},h('div',{style:{display:'flex',gap:11}},h('span',{style:{fontSize:22,flexShrink:0}},tip.e),h('div',{},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:2}},tip.h),h('div',{style:{fontSize:13,color:'var(--sub)'}},tip.p))))));return w;}
   rSec();return wrap;
 }
 
 // ══ FINANCES ══
-function buildFinances() {
-  let items=[], form={name:'',buy:'',sell:'',platform:'Vinted',status:''}, showForm=false, analysis=localStorage.getItem('vai_fin_ai')||'';
+function buildFinances(){
+  let items=[],form={name:'',buy:'',sell:'',platform:'Vinted',status:''},showForm=false,analysis=localStorage.getItem('vai_fin_ai')||'';
   const ss=g(lang,'F','ss');
   const wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:14}},h('div',{},h('div',{className:'stitle'},g(lang,'F','ti')),h('div',{className:'ssub'},g(lang,'F','su'))));
   const statsW=h('div',{}),formW=h('div',{}),aiW=h('div',{}),listW=h('div',{});
   async function load(){listW.innerHTML='';listW.appendChild(buildDots());try{items=await dbGet('finances');}catch(e){items=[];}redrawStats();redrawList();}
   function sold(){return items.filter(i=>[ss[1],'Vendu','Sold'].includes(i.status));}
-  function redrawStats(){
-    statsW.innerHTML='';const s=sold(),tB=items.reduce((a,i)=>a+(parseFloat(i.buy)||0),0),tS=s.reduce((a,i)=>a+(parseFloat(i.sell)||0),0),mg=tS-s.reduce((a,i)=>a+(parseFloat(i.buy)||0),0);
-    statsW.appendChild(h('div',{className:'card'},h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}},...[{l:g(lang,'F','iv'),v:tB.toFixed(0)+'€',c:'#93c5fd'},{l:g(lang,'F','ea'),v:tS.toFixed(0)+'€',c:'var(--p)'},{l:g(lang,'F','mg'),v:(mg>=0?'+':'')+mg.toFixed(0)+'€',c:mg>=0?'var(--g)':'var(--danger)'}].map(s=>h('div',{style:{background:'var(--inp)',borderRadius:12,padding:'12px 8px',textAlign:'center'}},h('div',{style:{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,color:s.c}},s.v),h('div',{style:{fontSize:10,color:'var(--sub)',marginTop:2}},s.l))))));
-  }
+  function redrawStats(){statsW.innerHTML='';const s=sold(),tB=items.reduce((a,i)=>a+(parseFloat(i.buy)||0),0),tS=s.reduce((a,i)=>a+(parseFloat(i.sell)||0),0),mg=tS-s.reduce((a,i)=>a+(parseFloat(i.buy)||0),0);statsW.appendChild(h('div',{className:'card'},h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}},...[{l:g(lang,'F','iv'),v:tB.toFixed(0)+'€',c:'#93c5fd'},{l:g(lang,'F','ea'),v:tS.toFixed(0)+'€',c:'var(--p)'},{l:g(lang,'F','mg'),v:(mg>=0?'+':'')+mg.toFixed(0)+'€',c:mg>=0?'var(--g)':'var(--danger)'}].map(s=>h('div',{style:{background:'var(--inp)',borderRadius:12,padding:'12px 8px',textAlign:'center'}},h('div',{style:{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,color:s.c}},s.v),h('div',{style:{fontSize:10,color:'var(--sub)',marginTop:2}},s.l))))));}
   function redrawAI(){aiW.innerHTML='';if(!analysis)return;aiW.appendChild(h('div',{className:'card',style:{background:'rgba(139,92,246,.07)'}},h('div',{style:{fontWeight:700,fontSize:12,color:'var(--p)',marginBottom:6}},'🤖 Analyse IA'),h('div',{style:{fontSize:13,color:'#c4b5fd',lineHeight:1.8}},analysis)));}
-  function redrawForm(){
-    formW.innerHTML='';if(!showForm)return;
-    const fc=h('div',{className:'card',style:{animation:'pop .22s ease both'}});
-    const nI=h('input',{type:'text',className:'inp',placeholder:"Jean Levi's 501…",value:form.name});nI.addEventListener('input',()=>form.name=nI.value);
-    const bI=h('input',{type:'number',className:'inp',placeholder:'0',value:form.buy});bI.addEventListener('input',()=>form.buy=bI.value);
-    const sI=h('input',{type:'number',className:'inp',placeholder:'0',value:form.sell});sI.addEventListener('input',()=>form.sell=sI.value);
-    fc.appendChild(h('label',{className:'lbl'},g(lang,'F','nm')));fc.appendChild(nI);
-    fc.appendChild(h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:11,margin:'11px 0'}},h('div',{},h('label',{className:'lbl'},g(lang,'F','by')),bI),h('div',{},h('label',{className:'lbl'},g(lang,'F','sl')),sI)));
-    fc.appendChild(h('label',{className:'lbl'},g(lang,'F','pl')));
-    const plW=h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:11}});
-    ['Vinted','Leboncoin','Depop','Autre'].forEach(p=>{const ch=h('button',{className:'chip'+(form.platform===p?' on':'')},p);ch.addEventListener('click',()=>{form.platform=p;Array.from(plW.children).forEach((b,j)=>b.className='chip'+(['Vinted','Leboncoin','Depop','Autre'][j]===p?' on':''));});plW.appendChild(ch);});fc.appendChild(plW);
-    fc.appendChild(h('label',{className:'lbl'},g(lang,'F','st')));
-    const stS=h('select',{className:'inp sel',style:{marginBottom:11}},h('option',{value:''},'—'),...ss.map(s=>{const o=h('option',{value:s},s);if(form.status===s)o.selected=true;return o;}));stS.addEventListener('change',()=>form.status=stS.value);fc.appendChild(stS);
-    fc.appendChild(h('button',{className:'btn',onClick:async()=>{if(!form.name)return;try{await dbInsert('finances',{name:form.name,buy:parseFloat(form.buy)||0,sell:parseFloat(form.sell)||0,platform:form.platform,status:form.status});form={name:'',buy:'',sell:'',platform:'Vinted',status:''};showForm=false;addBtn.textContent=g(lang,'F','ad');await load();redrawForm();}catch(e){alert(e.message);}}}  ,g(lang,'F','sv')));formW.appendChild(fc);
-  }
-  function redrawList(){
-    listW.innerHTML='';if(!items.length){listW.appendChild(h('div',{className:'card',style:{textAlign:'center',padding:48}},h('div',{style:{fontSize:40,marginBottom:10}},'📊'),h('div',{style:{color:'var(--sub)'}},g(lang,'F','em'))));return;}
-    items.forEach(item=>{const m=(parseFloat(item.sell)||0)-(parseFloat(item.buy)||0),isSold=[ss[1],'Vendu','Sold'].includes(item.status),mC=isSold?(m>0?'var(--g)':'var(--danger)'):'var(--sub)',mP=parseFloat(item.buy)>0?(m/parseFloat(item.buy)*100):0;
-    listW.appendChild(h('div',{className:'csm',style:{marginBottom:10}},h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}},h('div',{style:{flex:1,marginRight:8}},h('div',{style:{fontWeight:700,fontSize:14,marginBottom:5}},item.name),h('div',{style:{display:'flex',flexWrap:'wrap',gap:5,fontSize:12}},h('span',{style:{color:'#93c5fd'}},'🛒 '+item.buy+'€'),h('span',{style:{color:'var(--p)'}},'🏷️ '+item.sell+'€'),...(isSold?[h('span',{style:{color:mC,fontWeight:700}},(m>0?'+':'')+m.toFixed(0)+'€')]:[]),h('span',{style:{color:'var(--sub)',background:'rgba(255,255,255,.05)',padding:'2px 7px',borderRadius:99}},item.platform),h('span',{style:{color:'var(--sub)',background:'rgba(255,255,255,.04)',padding:'2px 7px',borderRadius:99}},item.status||'—')),...(isSold&&parseFloat(item.sell)>0?[h('div',{style:{marginTop:8}},h('div',{className:'pbar'},h('div',{className:'pbf',style:{width:Math.min(100,Math.max(0,mP+50))+'%',background:m>0?'linear-gradient(90deg,var(--g2),var(--g))':'linear-gradient(90deg,#dc2626,var(--danger))'},})),h('div',{style:{fontSize:10,color:mC,marginTop:2,textAlign:'right'}},(mP>0?'+':'')+mP.toFixed(0)+'% marge'))]:[])),h('button',{style:{background:'rgba(239,68,68,.1)',border:'none',color:'#fca5a5',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async()=>{try{await dbDelete('finances',item.id);await load();}catch(e){alert(e.message);}}},'🗑'))));});
-  }
+  function redrawForm(){formW.innerHTML='';if(!showForm)return;const fc=h('div',{className:'card',style:{animation:'pop .22s ease both'}});const nI=h('input',{type:'text',className:'inp',placeholder:"Jean Levi's 501…",value:form.name});nI.addEventListener('input',()=>form.name=nI.value);const bI=h('input',{type:'number',className:'inp',placeholder:'0',value:form.buy});bI.addEventListener('input',()=>form.buy=bI.value);const sI=h('input',{type:'number',className:'inp',placeholder:'0',value:form.sell});sI.addEventListener('input',()=>form.sell=sI.value);fc.appendChild(h('label',{className:'lbl'},g(lang,'F','nm')));fc.appendChild(nI);fc.appendChild(h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:11,margin:'11px 0'}},h('div',{},h('label',{className:'lbl'},g(lang,'F','by')),bI),h('div',{},h('label',{className:'lbl'},g(lang,'F','sl')),sI)));fc.appendChild(h('label',{className:'lbl'},g(lang,'F','pl')));const plW=h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:11}});['Vinted','Leboncoin','Depop','Autre'].forEach(p=>{const ch=h('button',{className:'chip'+(form.platform===p?' on':'')},p);ch.addEventListener('click',()=>{form.platform=p;Array.from(plW.children).forEach((b,j)=>b.className='chip'+(['Vinted','Leboncoin','Depop','Autre'][j]===p?' on':''));});plW.appendChild(ch);});fc.appendChild(plW);fc.appendChild(h('label',{className:'lbl'},g(lang,'F','st')));const stS=h('select',{className:'inp sel',style:{marginBottom:11}},h('option',{value:''},'—'),...ss.map(s=>{const o=h('option',{value:s},s);if(form.status===s)o.selected=true;return o;}));stS.addEventListener('change',()=>form.status=stS.value);fc.appendChild(stS);fc.appendChild(h('button',{className:'btn',onClick:async()=>{if(!form.name)return;try{await dbInsert('finances',{name:form.name,buy:parseFloat(form.buy)||0,sell:parseFloat(form.sell)||0,platform:form.platform,status:form.status});form={name:'',buy:'',sell:'',platform:'Vinted',status:''};showForm=false;addBtn.textContent=g(lang,'F','ad');await load();redrawForm();}catch(e){alert(e.message);}}}  ,g(lang,'F','sv')));formW.appendChild(fc);}
+  function redrawList(){listW.innerHTML='';if(!items.length){listW.appendChild(h('div',{className:'card',style:{textAlign:'center',padding:48}},h('div',{style:{fontSize:40,marginBottom:10}},'📊'),h('div',{style:{color:'var(--sub)'}},g(lang,'F','em'))));return;}items.forEach(item=>{const m=(parseFloat(item.sell)||0)-(parseFloat(item.buy)||0),isSold=[ss[1],'Vendu','Sold'].includes(item.status),mC=isSold?(m>0?'var(--g)':'var(--danger)'):'var(--sub)',mP=parseFloat(item.buy)>0?(m/parseFloat(item.buy)*100):0;listW.appendChild(h('div',{className:'csm',style:{marginBottom:10}},h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}},h('div',{style:{flex:1,marginRight:8}},h('div',{style:{fontWeight:700,fontSize:14,marginBottom:5}},item.name),h('div',{style:{display:'flex',flexWrap:'wrap',gap:5,fontSize:12}},h('span',{style:{color:'#93c5fd'}},'🛒 '+item.buy+'€'),h('span',{style:{color:'var(--p)'}},'🏷️ '+item.sell+'€'),...(isSold?[h('span',{style:{color:mC,fontWeight:700}},(m>0?'+':'')+m.toFixed(0)+'€')]:[]),h('span',{style:{color:'var(--sub)',background:'rgba(255,255,255,.05)',padding:'2px 7px',borderRadius:99}},item.platform),h('span',{style:{color:'var(--sub)',background:'rgba(255,255,255,.04)',padding:'2px 7px',borderRadius:99}},item.status||'—')),...(isSold&&parseFloat(item.sell)>0?[h('div',{style:{marginTop:8}},h('div',{className:'pbar'},h('div',{className:'pbf',style:{width:Math.min(100,Math.max(0,mP+50))+'%',background:m>0?'linear-gradient(90deg,var(--g2),var(--g))':'linear-gradient(90deg,#dc2626,var(--danger))'},})),h('div',{style:{fontSize:10,color:mC,marginTop:2,textAlign:'right'}},(mP>0?'+':'')+mP.toFixed(0)+'% marge'))]:[])),h('button',{style:{background:'rgba(239,68,68,.1)',border:'none',color:'#fca5a5',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async()=>{try{await dbDelete('finances',item.id);await load();}catch(e){alert(e.message);}}},'🗑'))));});}
   const addBtn=h('button',{className:'btng',onClick:()=>{showForm=!showForm;addBtn.textContent=showForm?'✕ Annuler':g(lang,'F','ad');redrawForm();}},g(lang,'F','ad'));
   const anaBtn=h('button',{className:'btng',onClick:async()=>{if(!items.length)return;anaBtn.disabled=true;anaBtn.textContent=g(lang,'F','an');try{const sum=items.map(i=>`${i.name}: achat ${i.buy}€, vente ${i.sell}€, statut ${i.status||'?'}`).join('\n');const raw=await callGroq([{role:'user',content:`Analyse these resale data and give concrete business advice in ${lang==='fr'?'French':'English'} (4-5 sentences):\n${sum}`}],'Expert resale advisor.',400,false);analysis=raw.trim();localStorage.setItem('vai_fin_ai',analysis);redrawAI();}catch(e){console.error(e);}anaBtn.disabled=false;anaBtn.textContent=g(lang,'F','ab');}},g(lang,'F','ab'));
   wrap.appendChild(statsW);wrap.appendChild(h('div',{style:{display:'flex',gap:9}},addBtn,anaBtn));wrap.appendChild(formW);wrap.appendChild(aiW);wrap.appendChild(listW);
@@ -966,11 +844,7 @@ function buildBot(){
   const wrap=h('div',{style:{display:'flex',flexDirection:'column',gap:14}},h('div',{},h('div',{className:'stitle'},g(lang,'B','ti')),h('div',{className:'ssub'},g(lang,'B','su'))));
   async function loadSearches(){try{searches=await dbGet('bot_searches');results=localStorage.getItem('vai_bot_results')?JSON.parse(localStorage.getItem('vai_bot_results')):{} ;}catch(e){searches=[];}searches.filter(s=>s.active).forEach(startBot);redrawList();}
   const nBtn=h('button',{className:'btng',style:{justifyContent:'flex-start',gap:8},onClick:async()=>{try{const p=await Notification.requestPermission();notifOk=p==='granted';nBtn.textContent=notifOk?g(lang,'B','no'):g(lang,'B','nf');}catch(_){}}},notifOk?g(lang,'B','no'):g(lang,'B','nf'));
-  const apiCard=h('div',{className:'card'});apiCard.appendChild(h('label',{className:'lbl'},g(lang,'B','ak')));
-  const apiInp=h('input',{type:'text',className:'inp',placeholder:g(lang,'B','ap'),value:apiKey,style:{marginBottom:8}});apiInp.addEventListener('input',()=>apiKey=apiInp.value);
-  const savApiBtn=h('button',{className:'btng btsm',style:{width:'auto'},onClick:()=>{localStorage.setItem('vai_apify',apiKey);savApiBtn.textContent='✅';setTimeout(()=>savApiBtn.textContent=g(lang,'B','sa'),2000);}},g(lang,'B','sa'));
-  apiCard.appendChild(h('div',{style:{display:'flex',gap:8}},apiInp,savApiBtn));
-  apiCard.appendChild(h('div',{style:{marginTop:8,background:'rgba(139,92,246,.07)',borderRadius:10,padding:'8px 12px',fontSize:12,color:'#c4b5fd',lineHeight:1.6}},'💡 ',h('a',{href:'https://apify.com',target:'_blank',style:{color:'var(--p)',fontWeight:700}},'apify.com'),' → API & Integrations → Personal API Token'));
+  const apiCard=h('div',{className:'card'});apiCard.appendChild(h('label',{className:'lbl'},g(lang,'B','ak')));const apiInp=h('input',{type:'text',className:'inp',placeholder:g(lang,'B','ap'),value:apiKey,style:{marginBottom:8}});apiInp.addEventListener('input',()=>apiKey=apiInp.value);const savApiBtn=h('button',{className:'btng btsm',style:{width:'auto'},onClick:()=>{localStorage.setItem('vai_apify',apiKey);savApiBtn.textContent='✅';setTimeout(()=>savApiBtn.textContent=g(lang,'B','sa'),2000);}},g(lang,'B','sa'));apiCard.appendChild(h('div',{style:{display:'flex',gap:8}},apiInp,savApiBtn));apiCard.appendChild(h('div',{style:{marginTop:8,background:'rgba(139,92,246,.07)',borderRadius:10,padding:'8px 12px',fontSize:12,color:'#c4b5fd',lineHeight:1.6}},'💡 ',h('a',{href:'https://apify.com',target:'_blank',style:{color:'var(--p)',fontWeight:700}},'apify.com'),' → API & Integrations → Personal API Token'));
   const addBtn=h('button',{className:'btng',onClick:()=>{showForm=!showForm;addBtn.textContent=showForm?'✕ Annuler':g(lang,'B','as');redrawForm();}},g(lang,'B','as'));
   const formW=h('div',{}),listW=h('div',{});
   wrap.appendChild(nBtn);wrap.appendChild(apiCard);wrap.appendChild(addBtn);wrap.appendChild(formW);wrap.appendChild(listW);
@@ -978,7 +852,7 @@ function buildBot(){
   async function scanOnce(search){if(!apiKey)return;scanning[search.id]=true;redrawList();try{let items=[];try{const r=await fetch(`https://api.apify.com/v2/acts/epctex~vinted-scraper/run-sync-get-dataset-items?token=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({searchQuery:search.query,maxPrice:search.max_price||999,maxItems:20,country:'fr'})});if(r.ok)items=await r.json();}catch(_){const raw=await callGroq([{role:'user',content:`Generate 6 realistic Vinted listings for "${search.query}" max ${search.max_price||999}€. Reply ONLY valid JSON array: [{"id":"1","title":"...","price":25,"size":"M","brand":"Nike","condition":"Bon état","image":"","url":"https://www.vinted.fr/items/123456"}]`}],'Return only valid JSON array.',500,false);items=pJ(raw);}if(items.length){const sRaw=await callGroq([{role:'user',content:`Score these Vinted listings for resale potential 1-10. Query: "${search.query}". Reply ONLY valid JSON array with same items + "score":<int> + "scoreReason":"<15 words>": ${JSON.stringify(items.slice(0,8))}`}],'Return only valid JSON array.',600,false);const scored=pJ(sRaw),filtered=scored.filter(i=>(i.score||0)>=parseInt(search.min_score||6)).sort((a,b)=>b.score-a.score);try{await dbUpdate('bot_searches',search.id,{last_scan:new Date().toISOString()});}catch(_){}searches=searches.map(s=>s.id===search.id?{...s,last_scan:new Date().toISOString()}:s);const prev=results[search.id]||[],newItems=filtered.filter(i=>!prev.find(p=>p.title===i.title));results={...results,[search.id]:filtered};localStorage.setItem('vai_bot_results',JSON.stringify(results));if(newItems.length>0)showNotif({title:`🔔 ${newItems.length} nouvelle${newItems.length>1?'s':''} annonce${newItems.length>1?'s':''}!`,body:`${search.query} — ${newItems[0].title} à ${newItems[0].price}€`});}}catch(e){console.error('Bot:',e);}scanning[search.id]=false;redrawList();}
   function startBot(s){clearInterval(intervals[s.id]);scanOnce(s);intervals[s.id]=setInterval(()=>{const cur=searches.find(x=>x.id===s.id);if(cur?.active)scanOnce(cur);},fMs[s.freq]||1800000);}
   function stopBot(id){clearInterval(intervals[id]);delete intervals[id];}
-  function redrawList(){listW.innerHTML='';if(!searches.length){listW.appendChild(h('div',{className:'card',style:{textAlign:'center',padding:48}},h('div',{style:{fontSize:40,marginBottom:10}},'🤖'),h('div',{style:{color:'var(--sub)',fontSize:14}},lang==='fr'?'Aucune recherche active.':'No active searches.')));return;}searches.forEach(s=>{const sR=results[s.id]||[],isScan=scanning[s.id];const sc=h('div',{className:'csm',style:{marginBottom:10,borderColor:s.active?'rgba(16,185,129,.25)':'var(--border)'}});sc.appendChild(h('div',{style:{display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer'},onClick:()=>{activeS=activeS===s.id?null:s.id;redrawList();}},h('div',{style:{width:36,height:36,borderRadius:10,flexShrink:0,background:s.active?'linear-gradient(135deg,var(--g2),var(--g))':'rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,position:'relative'}},'🔍',...(isScan?[h('div',{style:{position:'absolute',inset:-2,borderRadius:12,border:'2px solid transparent',borderTopColor:'var(--g)',animation:'spin 1s linear infinite'}})]:[])),h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},s.query),h('div',{style:{display:'flex',gap:6,fontSize:11,flexWrap:'wrap'}},...(s.max_price?[h('span',{style:{color:'var(--p)'}},'max '+s.max_price+'€')]:[]),h('span',{style:{color:'var(--sub)'}},s.freq),h('span',{style:{color:'var(--sub)'}},'score ≥ '+s.min_score),h('span',{style:{color:s.active?'var(--g)':'var(--sub)',fontWeight:700}},s.active?g(lang,'B','av'):g(lang,'B','in')),...(sR.length>0?[h('span',{style:{color:'var(--warn)'}},'📊 '+sR.length)]:[])),  ...(s.last_scan?[h('div',{style:{fontSize:10,color:'var(--sub)',marginTop:2}},g(lang,'B','ls')+' '+new Date(s.last_scan).toLocaleTimeString())]:[])),h('div',{style:{display:'flex',gap:5}},h('button',{style:{background:'rgba(139,92,246,.12)',border:'none',color:'var(--p)',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:e=>{e.stopPropagation();if(apiKey)scanOnce(s);}},'🔄'),h('button',{style:{background:s.active?'rgba(16,185,129,.12)':'var(--inp)',border:'none',color:s.active?'var(--g)':'var(--sub)',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async e=>{e.stopPropagation();const na=!s.active;try{await dbUpdate('bot_searches',s.id,{active:na});searches=searches.map(x=>x.id===s.id?{...x,active:na}:x);if(na)startBot(s);else stopBot(s.id);redrawList();}catch(e2){alert(e2.message);}}},s.active?'⏸':'▶️'),h('button',{style:{background:'rgba(239,68,68,.1)',border:'none',color:'#fca5a5',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async e=>{e.stopPropagation();try{await dbDelete('bot_searches',s.id);stopBot(s.id);searches=searches.filter(x=>x.id!==s.id);delete results[s.id];redrawList();}catch(e2){alert(e2.message);}}},'🗑'))));listW.appendChild(sc);if(activeS===s.id){const rw=h('div',{style:{display:'flex',flexDirection:'column',gap:8,marginBottom:10}});if(isScan)rw.appendChild(buildDots());if(!isScan&&sR.length===0)rw.appendChild(h('div',{className:'csm',style:{textAlign:'center',fontSize:13,color:'var(--sub)'}},!apiKey?g(lang,'B','na'):g(lang,'B','nr')));sR.forEach(item=>{rw.appendChild(h('div',{className:'csm',style:{borderColor:item.score>=8?'rgba(16,185,129,.3)':'var(--border)'}},h('div',{style:{display:'flex',gap:10}},item.image?h('img',{src:item.image,style:{width:58,height:58,borderRadius:10,objectFit:'cover',flexShrink:0}}):h('div',{style:{width:58,height:58,borderRadius:10,background:'linear-gradient(135deg,rgba(139,92,246,.2),rgba(16,185,129,.2))',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},'👗'),h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:3,lineHeight:1.35}},item.title),h('div',{style:{display:'flex',flexWrap:'wrap',gap:5,fontSize:12,marginBottom:5}},h('span',{style:{fontWeight:800,fontSize:14,color:'var(--g)'}},item.price+'€'),...(item.size?[h('span',{style:{color:'var(--sub)'}},item.size)]:[]),...(item.brand?[h('span',{style:{color:'var(--p)'}},item.brand)]:[]),h('span',{style:{background:item.score>=8?'rgba(16,185,129,.15)':'rgba(255,255,255,.07)',color:item.score>=8?'var(--g)':'var(--sub)',padding:'1px 7px',borderRadius:99,fontWeight:700}},item.score+'/10')),...(item.scoreReason?[h('div',{style:{fontSize:11,color:'var(--sub)',fontStyle:'italic'}},item.scoreReason)]:[]))),...(item.url?[h('a',{href:item.url,target:'_blank',style:{display:'block',marginTop:10,padding:'9px 0',borderRadius:10,background:'linear-gradient(135deg,var(--p),var(--g))',color:'white',fontWeight:700,fontSize:13,textAlign:'center',textDecoration:'none'}},g(lang,'B','vb'))]:[])));});listW.appendChild(rw);}});}
+  function redrawList(){listW.innerHTML='';if(!searches.length){listW.appendChild(h('div',{className:'card',style:{textAlign:'center',padding:48}},h('div',{style:{fontSize:40,marginBottom:10}},'🤖'),h('div',{style:{color:'var(--sub)',fontSize:14}},lang==='fr'?'Aucune recherche active.':'No active searches.')));return;}searches.forEach(s=>{const sR=results[s.id]||[],isScan=scanning[s.id];const sc=h('div',{className:'csm',style:{marginBottom:10,borderColor:s.active?'rgba(16,185,129,.25)':'var(--border)'}});sc.appendChild(h('div',{style:{display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer'},onClick:()=>{activeS=activeS===s.id?null:s.id;redrawList();}},h('div',{style:{width:36,height:36,borderRadius:10,flexShrink:0,background:s.active?'linear-gradient(135deg,var(--g2),var(--g))':'rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,position:'relative'}},'🔍',...(isScan?[h('div',{style:{position:'absolute',inset:-2,borderRadius:12,border:'2px solid transparent',borderTopColor:'var(--g)',animation:'spin 1s linear infinite'}})]:[])),h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},s.query),h('div',{style:{display:'flex',gap:6,fontSize:11,flexWrap:'wrap'}},...(s.max_price?[h('span',{style:{color:'var(--p)'}},'max '+s.max_price+'€')]:[]),h('span',{style:{color:'var(--sub)'}},s.freq),h('span',{style:{color:'var(--sub)'}},'score ≥ '+s.min_score),h('span',{style:{color:s.active?'var(--g)':'var(--sub)',fontWeight:700}},s.active?g(lang,'B','av'):g(lang,'B','in')),...(sR.length>0?[h('span',{style:{color:'var(--warn)'}},'📊 '+sR.length)]:[])),  ...(s.last_scan?[h('div',{style:{fontSize:10,color:'var(--sub)',marginTop:2}},g(lang,'B','ls')+' '+new Date(s.last_scan).toLocaleTimeString())]:[])),h('div',{style:{display:'flex',gap:5}},h('button',{style:{background:'rgba(139,92,246,.12)',border:'none',color:'var(--p)',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:e=>{e.stopPropagation();if(apiKey)scanOnce(s);}},'🔄'),h('button',{style:{background:s.active?'rgba(16,185,129,.12)':'var(--inp)',border:'none',color:s.active?'var(--g)':'var(--sub)',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async e=>{e.stopPropagation();const na=!s.active;try{await dbUpdate('bot_searches',s.id,{active:na});searches=searches.map(x=>x.id===s.id?{...x,active:na}:x);if(na)startBot(s);else stopBot(s.id);redrawList();}catch(e2){alert(e2.message);}}},s.active?'⏸':'▶️'),h('button',{style:{background:'rgba(239,68,68,.1)',border:'none',color:'#fca5a5',borderRadius:7,padding:'4px 7px',cursor:'pointer',fontSize:12},onClick:async e=>{e.stopPropagation();try{await dbDelete('bot_searches',s.id);stopBot(s.id);searches=searches.filter(x=>x.id!==s.id);delete results[s.id];redrawList();}catch(e2){alert(e2.message);}}},'🗑'))));listW.appendChild(sc);if(activeS===s.id){const rw=h('div',{style:{display:'flex',flexDirection:'column',gap:8,marginBottom:10}});if(isScan)rw.appendChild(buildDots());if(!isScan&&sR.length===0)rw.appendChild(h('div',{className:'csm',style:{textAlign:'center',fontSize:13,color:'var(--sub)'}},!apiKey?g(lang,'B','na'):g(lang,'B','nr')));sR.forEach(item=>{rw.appendChild(h('div',{className:'csm',style:{borderColor:item.score>=8?'rgba(16,185,129,.3)':'var(--border)'}},h('div',{style:{display:'flex',gap:10}},item.image?h('img',{src:item.image,style:{width:58,height:58,borderRadius:10,objectFit:'cover',flexShrink:0}}):h('div',{style:{width:58,height:58,borderRadius:10,background:'linear-gradient(135deg,rgba(139,92,246,.2),rgba(16,185,129,.2))',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},'👗'),h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:700,fontSize:13,marginBottom:3,lineHeight:1.35}},item.title),h('div',{style:{display:'flex',flexWrap:'wrap',gap:5,fontSize:12,marginBottom:5}},h('span',{style:{fontWeight:800,fontSize:14,color:'var(--g)'}},item.price+'€'),...(item.size?[h('span',{style:{color:'var(--sub)'}},item.size)]:[]),...(item.brand?[h('span',{style:{color:'var(--p)'}},item.brand)]:[]),h('span',{style:{background:item.score>=8?'rgba(16,185,129,.15)':'rgba(255,255,255,.07)',color:item.score>=8?'var(--g)':'var(--sub)',padding:'1px 7px',borderRadius:99,fontWeight:700}},item.score+'/10')),...(item.scoreReason?[h('div',{style:{fontSize:11,color:'var(--sub)',fontStyle:'italic'}},item.scoreReason)]:[]))),...(item.url?[h('a',{href:item.url,target:'_blank',style:{display:'block',marginTop:10,padding:'9px 0',borderRadius:10,background:'linear-gradient(135deg,var(--p),var(--g))',color:'white',fontWeight:700,fontSize:13,textAlign:'center',textDecoration:'none'}},g(lang,'B','vb'))]:[]))); });listW.appendChild(rw);}});}
   loadSearches();redrawForm();return wrap;
 }
 
@@ -992,10 +866,10 @@ function buildHistory(){
   load();return wrap;
 }
 
-// ══ INSTALL MODAL ══
+// ══ INSTALL ══
 function showInstallModal(){
   const isIOS=/iphone|ipad/i.test(navigator.userAgent);
-  const steps=lang==='fr'?(isIOS?['Ouvrez ce lien dans Safari (pas Chrome)','Appuyez sur ⬆️ Partager en bas',"Choisissez « Sur l'écran d'accueil »","Appuyez sur « Ajouter » 🎉"]:['Appuyez sur ⋮ en haut à droite de Chrome',"Choisissez « Ajouter à l'écran d'accueil »",'Confirmez 🎉']):(isIOS?['Open in Safari (not Chrome)','Tap ⬆️ Share at the bottom',"Choose 'Add to Home Screen'","Tap 'Add' 🎉"]:['Tap ⋮ top right in Chrome',"Choose 'Add to Home screen'",'Confirm 🎉']);
+  const steps=lang==='fr'?(isIOS?['Ouvrez ce lien dans Safari (pas Chrome)','Appuyez sur ⬆️ Partager en bas',"Choisissez « Sur l'écran d'accueil »","Appuyez sur « Ajouter » 🎉"]:['Appuyez sur ⋮ en haut à droite de Chrome',"Choisissez « Ajouter à l'écran d'accueil »",'Confirmez 🎉']):(isIOS?['Open in Safari (not Chrome)','Tap ⬆️ Share',"Choose 'Add to Home Screen'","Tap 'Add' 🎉"]:['Tap ⋮ in Chrome',"Choose 'Add to Home screen'",'Confirm 🎉']);
   const ov=h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.82)',zIndex:1000,display:'flex',alignItems:'flex-end',justifyContent:'center'}});ov.addEventListener('click',()=>ov.remove());
   const box=h('div',{style:{background:'#0f0e17',borderRadius:'20px 20px 0 0',padding:'20px 18px 36px',width:'100%',maxWidth:480,border:'1px solid var(--border)',animation:'pop .3s ease'}});box.addEventListener('click',e=>e.stopPropagation());
   box.appendChild(h('div',{style:{width:36,height:4,borderRadius:99,background:'rgba(255,255,255,.12)',margin:'0 auto 16px'}}));
@@ -1007,14 +881,14 @@ function showInstallModal(){
 }
 
 // ══ INIT ══
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) { currentUser = session.user; isGuest = false; render(); }
-  else { showAuth(); }
-  sb.auth.onAuthStateChange((event, session) => {
-    currentUser = session?.user || null;
-    if (currentUser) { isGuest = false; render(); }
-    else if (event === 'SIGNED_OUT') { isGuest = false; showAuth(); }
+async function init(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;isGuest=false;render();}
+  else{showAuth();}
+  sb.auth.onAuthStateChange((event,session)=>{
+    currentUser=session?.user||null;
+    if(currentUser){isGuest=false;render();}
+    else if(event==='SIGNED_OUT'){isGuest=false;showAuth();}
   });
 }
 init();

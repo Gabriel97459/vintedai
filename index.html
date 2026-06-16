@@ -286,11 +286,11 @@ async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
   onProgress && onProgress(30, lang==='fr'?'Suppression du fond (IA gratuite)…':'Removing background (free AI)…');
 
   // Appel API Hugging Face RMBG-1.4
-  // Récupère la clé HF depuis Netlify si pas déjà en cache
-  if(!HF_KEY && window.location.hostname.includes('netlify')) {
+  // Récupère toujours la clé HF fraîche depuis Netlify
+  if(window.location.hostname.includes('netlify')) {
     try {
       const cfg = await fetch('/.netlify/functions/config').then(r=>r.json());
-      if(cfg.hfKey) { HF_KEY = cfg.hfKey; localStorage.setItem('vai_hf_key', HF_KEY); }
+      if(cfg.hfKey) HF_KEY = cfg.hfKey;
     } catch(_) {}
   }
   const headers = {'Content-Type':'application/octet-stream'};
@@ -852,41 +852,42 @@ function buildRetouch(){
         processedB64=await applyCanvasAdjustments(file,opts);
       }
       let canvasFallback=false,resultDataUrl,hfUsed=false;
-      // 1. Essai Hugging Face (gratuit)
-      let hfAttempts=0;
-      while(hfAttempts<2){
+      // 1. Hugging Face — jusqu'à 4 tentatives avec attente progressive
+      const MAX_HF=4;
+      for(let attempt=0;attempt<MAX_HF;attempt++){
         try{
           resultDataUrl=await transformImageWithHF(processedB64,selectedBg,(pct,msg)=>{
             progressPct=pct;progressMsg=msg;redrawPhoto();redrawProgress();
           });
           hfUsed=true;break;
         }catch(hfErr){
-          if(hfErr.message==='hf_loading'&&hfAttempts===0){
-            // Modèle en chargement, on attend 20s et on réessaie
-            progressMsg=lang==='fr'?'Modèle IA en démarrage (20s)…':'AI model warming up (20s)…';
+          if(hfErr.message==='hf_loading'){
+            const waitSec=20+attempt*10;
+            progressMsg=lang==='fr'?`Modèle IA en démarrage — attente ${waitSec}s (${attempt+1}/${MAX_HF})…`:`AI model warming up — waiting ${waitSec}s (${attempt+1}/${MAX_HF})…`;
             redrawProgress();
-            await new Promise(r=>setTimeout(r,20000));
-            hfAttempts++;
+            await new Promise(r=>setTimeout(r,waitSec*1000));
           }else{
-            console.warn('HF failed, trying fal.ai:',hfErr.message);break;
+            console.warn('HF attempt',attempt,'failed:',hfErr.message);
+            if(attempt===MAX_HF-1) break;
+            await new Promise(r=>setTimeout(r,3000));
           }
         }
       }
-      // 2. Fallback fal.ai
+      // 2. Fallback canvas si HF échoue
       if(!hfUsed){
-        try{
-          resultDataUrl=await transformImageWithAI(processedB64,selectedBg,(pct,msg)=>{
-            progressPct=pct;progressMsg=msg;redrawPhoto();redrawProgress();
-          });
-        }catch(aiErr){
-          const isBalanceErr=aiErr.message.includes('Exhausted balance')||aiErr.message.includes('locked')||aiErr.message.includes('User is locked');
-          const isAuthErr=aiErr.message.includes('401')||aiErr.message.includes('Unauthorized')||aiErr.message.includes('Invalid');
-          if(isBalanceErr||isAuthErr||true){
-            // 3. Fallback canvas
-            canvasFallback=true;
-            resultDataUrl='data:image/jpeg;base64,'+processedB64;
-          }else{throw aiErr;}
-        }
+        canvasFallback=true;
+        // Applique quand même le fond choisi avec canvas
+        resultDataUrl=await new Promise(res=>{
+          const img=new Image();
+          img.onload=()=>{
+            const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+            const ctx=c.getContext('2d');
+            const bgColors={white:'#FFFFFF',grey:'#E8E8E8',marble:'#F0EBE3',sky:'#DAEEFF',rug:'#F7F4EF'};
+            ctx.fillStyle=bgColors[selectedBg]||'#FFFFFF';ctx.fillRect(0,0,c.width,c.height);
+            ctx.drawImage(img,0,0);res(c.toDataURL('image/jpeg',.92));
+          };
+          img.src='data:image/jpeg;base64,'+processedB64;
+        });
       }
       result={before:preview,after:resultDataUrl,canvasFallback};
     }catch(e){

@@ -155,9 +155,17 @@ let lang = localStorage.getItem('vai_lang') || 'fr';
 
 // ══ GROQ ══
 async function callGroq(messages, system, max = 1200, vision = false) {
-  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  // Utilise la Netlify Function (clé secrète côté serveur) ou fallback clé locale
+  const useProxy = window.location.hostname.includes('netlify.app') || window.location.hostname.includes('netlify');
+  const endpoint = useProxy
+    ? '/.netlify/functions/groq'
+    : 'https://api.groq.com/openai/v1/chat/completions';
+  const headers = useProxy
+    ? { 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY };
+  const r = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY },
+    headers,
     body: JSON.stringify({ model: vision ? GROQ_VISION : GROQ_TEXT, max_tokens: max, messages: [{ role: 'system', content: system }, ...messages] })
   });
   if (!r.ok) throw new Error('Groq ' + r.status + ': ' + await r.text());

@@ -565,6 +565,28 @@ JSON UNIQUEMENT :
     const copyBtn=h('button',{className:'btn',style:{flex:1},onClick:()=>{navigator.clipboard.writeText((result.title||'')+'\n\n'+(result.description||'')+'\n\n'+(result.hashtags||''));copyBtn.textContent=g(lang,'C','cc');setTimeout(()=>copyBtn.textContent=g(lang,'C','cb'),2200);}},g(lang,'C','cb'));
     const newBtn=h('button',{className:'btng',style:{flex:1},onClick:()=>{file=null;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=null;result=null;err='';redrawPhoto();redrawResult();}},g(lang,'C','nb'));
     resultCard.appendChild(h('div',{style:{display:'flex',gap:9}},copyBtn,newBtn));
+    // Bouton envoyer vers Bot Vinted
+    const botStatusEl=h('div',{style:{fontSize:12,textAlign:'center',marginTop:6,color:'var(--sub)',minHeight:18}});
+    const botBtn=h('button',{className:'btn',style:{width:'100%',marginTop:8,background:'linear-gradient(135deg,#8b5cf6,#10b981)'},onClick:async()=>{
+      const email=supabase.auth.getUser?((await supabase.auth.getUser()).data?.user?.email)||'guest':'guest';
+      const msg=lang==='fr'
+        ?`Bonjour ! Je vends : ${result.title||''}. ${(result.description||'').split('\n\n')[0]||''}`
+        :`Hi! I'm selling: ${result.title||''}. ${(result.description||'').split('\n\n')[0]||''}`;
+      botBtn.disabled=true;botBtn.textContent='⏳ Envoi…';
+      try{
+        const{error}=await supabase.from('vinted_messages').insert({user_email:email,title:result.title||'',message:msg,price:String(result.price||'')});
+        if(error)throw error;
+        botBtn.textContent='✅ Envoyé au Bot !';
+        botStatusEl.textContent=lang==='fr'?'Le 🤖 sur Vinted affichera ce message automatiquement.':'The 🤖 on Vinted will show this message automatically.';
+        botStatusEl.style.color='var(--g)';
+        setTimeout(()=>{botBtn.disabled=false;botBtn.textContent='📤 '+(lang==='fr'?'Envoyer vers Bot Vinted':'Send to Vinted Bot');},4000);
+      }catch(e){
+        botBtn.textContent='❌ Erreur';botBtn.disabled=false;
+        botStatusEl.textContent=e.message;botStatusEl.style.color='var(--danger)';
+      }
+    }},'📤 '+(lang==='fr'?'Envoyer vers Bot Vinted':'Send to Vinted Bot'));
+    resultCard.appendChild(botBtn);
+    resultCard.appendChild(botStatusEl);
   }
 
   async function doGen(){

@@ -286,12 +286,12 @@ async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
   onProgress && onProgress(30, lang==='fr'?'Suppression du fond (IA gratuite)…':'Removing background (free AI)…');
 
   // Appel API Hugging Face RMBG-1.4
+  const useProxy = window.location.hostname.includes('netlify');
+  const endpoint = useProxy ? '/.netlify/functions/hf' : 'https://api-inference.huggingface.co/models/briaai/RMBG-1.4';
   const headers = {'Content-Type':'application/octet-stream'};
-  if(HF_KEY) headers['Authorization'] = 'Bearer ' + HF_KEY;
+  if(!useProxy && HF_KEY) headers['Authorization'] = 'Bearer ' + HF_KEY;
 
-  const res = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
-    method:'POST', headers, body: blob
-  });
+  const res = await fetch(endpoint, { method:'POST', headers, body: blob });
 
   if(!res.ok) {
     const txt = await res.text();
@@ -997,34 +997,41 @@ function buildHistory(){
 
 // ══ SETTINGS ══
 function showSettings(){
+  const isNetlify = window.location.hostname.includes('netlify');
   const ov=h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.82)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}});
   ov.addEventListener('click',()=>ov.remove());
   const box=h('div',{style:{background:'#16142a',border:'1px solid var(--border)',borderRadius:22,padding:'28px 24px',maxWidth:440,width:'100%',animation:'pop .3s ease'}});
   box.addEventListener('click',e=>e.stopPropagation());
-  box.appendChild(h('div',{style:{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,marginBottom:4}},'⚙️ '+(lang==='fr'?'Clés API':'API Keys')));
-  box.appendChild(h('div',{style:{fontSize:13,color:'var(--sub)',marginBottom:20,lineHeight:1.6}},lang==='fr'?'Mettez à jour vos clés API. Sauvegardées dans votre navigateur.':'Update your API keys. Saved in your browser.'));
-  const groqInp=h('input',{type:'text',className:'inp',placeholder:'gsk_...',value:GROQ_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
-  const falInp=h('input',{type:'text',className:'inp',placeholder:'xxxx:xxxx',value:FAL_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
-  const hfInp=h('input',{type:'text',className:'inp',placeholder:'hf_...',value:HF_KEY,style:{marginBottom:16,fontFamily:'monospace',fontSize:11}});
-  box.appendChild(h('label',{className:'lbl'},'Groq API Key'));
-  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'Gratuit sur console.groq.com → API Keys':'Free at console.groq.com → API Keys'));
-  box.appendChild(groqInp);
-  box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'Hugging Face API Key '+(lang==='fr'?'(photo gratuite)':'(free photo)')));
-  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'Gratuit sur huggingface.co → Settings → Access Tokens':'Free at huggingface.co → Settings → Access Tokens'));
-  box.appendChild(hfInp);
-  box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'fal.ai API Key '+(lang==='fr'?'(optionnel)':'(optional)')));
-  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'fal.ai/dashboard/keys — optionnel, Hugging Face est utilisé en priorité':'fal.ai/dashboard/keys — optional, Hugging Face is used first'));
-  box.appendChild(falInp);
-  const saveBtn=h('button',{className:'btn',style:{marginTop:4},onClick:()=>{
-    const gk=groqInp.value.trim(),fk=falInp.value.trim(),hk=hfInp.value.trim();
-    if(gk){localStorage.setItem('vai_groq_key',gk);GROQ_KEY=gk;}
-    if(fk){localStorage.setItem('vai_fal_key',fk);FAL_KEY=fk;}
-    if(hk){localStorage.setItem('vai_hf_key',hk);HF_KEY=hk;}
-    saveBtn.textContent='✅ '+(lang==='fr'?'Sauvegardé !':'Saved!');
-    setTimeout(()=>ov.remove(),1500);
-  }},lang==='fr'?'💾 Sauvegarder':'💾 Save');
-  box.appendChild(saveBtn);
-  box.appendChild(h('button',{className:'btng',style:{marginTop:8},onClick:()=>ov.remove()},lang==='fr'?'Annuler':'Cancel'));
+  box.appendChild(h('div',{style:{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,marginBottom:4}},'⚙️ '+(lang==='fr'?'Paramètres':'Settings')));
+  if(isNetlify){
+    // Sur Netlify : clés gérées côté serveur, invisibles
+    box.appendChild(h('div',{style:{background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.25)',borderRadius:14,padding:'14px 16px',marginBottom:20}},
+      h('div',{style:{fontWeight:700,fontSize:13,color:'var(--g)',marginBottom:4}},'✅ '+(lang==='fr'?'Clés API sécurisées':'API Keys secured')),
+      h('div',{style:{fontSize:12,color:'#a7f3d0',lineHeight:1.7}},lang==='fr'?'Les clés API sont gérées côté serveur. Aucune configuration nécessaire — l\'app fonctionne directement.':'API keys are managed server-side. No configuration needed — the app works out of the box.')
+    ));
+  } else {
+    // En local/dev : permet de modifier les clés
+    box.appendChild(h('div',{style:{fontSize:13,color:'var(--sub)',marginBottom:16,lineHeight:1.6}},lang==='fr'?'Mode développeur — clés sauvegardées dans votre navigateur.':'Developer mode — keys saved in your browser.'));
+    const groqInp=h('input',{type:'text',className:'inp',placeholder:'gsk_...',value:GROQ_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
+    const hfInp=h('input',{type:'text',className:'inp',placeholder:'hf_...',value:HF_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
+    const falInp=h('input',{type:'text',className:'inp',placeholder:'xxxx:xxxx',value:FAL_KEY,style:{marginBottom:16,fontFamily:'monospace',fontSize:11}});
+    box.appendChild(h('label',{className:'lbl'},'Groq API Key'));
+    box.appendChild(groqInp);
+    box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'Hugging Face Key'));
+    box.appendChild(hfInp);
+    box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'fal.ai Key'));
+    box.appendChild(falInp);
+    const saveBtn=h('button',{className:'btn',style:{marginTop:4},onClick:()=>{
+      const gk=groqInp.value.trim(),fk=falInp.value.trim(),hk=hfInp.value.trim();
+      if(gk){localStorage.setItem('vai_groq_key',gk);GROQ_KEY=gk;}
+      if(fk){localStorage.setItem('vai_fal_key',fk);FAL_KEY=fk;}
+      if(hk){localStorage.setItem('vai_hf_key',hk);HF_KEY=hk;}
+      saveBtn.textContent='✅ '+(lang==='fr'?'Sauvegardé !':'Saved!');
+      setTimeout(()=>ov.remove(),1500);
+    }},lang==='fr'?'💾 Sauvegarder':'💾 Save');
+    box.appendChild(saveBtn);
+  }
+  box.appendChild(h('button',{className:'btng',style:{marginTop:8},onClick:()=>ov.remove()},lang==='fr'?'Fermer':'Close'));
   ov.appendChild(box);document.body.appendChild(ov);
 }
 

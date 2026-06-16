@@ -824,7 +824,7 @@ function buildRetouch(){
     resWrap.appendChild(h('div',{className:'card',style:{padding:0,overflow:'hidden',marginBottom:14}},cw));
     resWrap.appendChild(h('div',{className:'csm',style:{background:result.canvasFallback?'rgba(245,158,11,.07)':'rgba(16,185,129,.07)',border:'1px solid '+(result.canvasFallback?'rgba(245,158,11,.2)':'rgba(16,185,129,.2)'),marginBottom:14}},
       h('div',{style:{fontSize:13,color:result.canvasFallback?'#fde68a':'#a7f3d0',lineHeight:1.6}},result.canvasFallback?
-        (lang==='fr'?'⚠️ Filtres appliqués uniquement (solde fal.ai épuisé ou clé invalide). Rechargez sur fal.ai/dashboard/billing puis mettez à jour la clé dans ⚙️ Clés API.':'⚠️ Filters only applied (fal.ai balance exhausted or invalid key). Top up at fal.ai/dashboard/billing then update key in ⚙️ API Keys.'):
+        (lang==='fr'?'⚠️ Filtres appliqués uniquement — le modèle IA était en cours de démarrage. Réessayez dans 30 secondes pour obtenir la suppression de fond complète.':'⚠️ Filters only applied — AI model was warming up. Retry in 30 seconds for full background removal.'):
         (lang==='fr'?'✨ Photo transformée par l\'IA — glissez le curseur pour comparer avant/après.':'✨ AI-transformed photo — drag to compare before/after.')
       )
     ));

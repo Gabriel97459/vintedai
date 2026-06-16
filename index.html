@@ -143,33 +143,62 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 const SITE_URL = 'https://optivintedai.netlify.app';
 const SUPABASE_URL = 'https://xipkqhctpyjjtmmuxxac.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpcGtxaGN0cHlqanRtbXV4eGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzc4NDgsImV4cCI6MjA5NDQ1Mzg0OH0.ExADaMv_83GNQvWChw-xOeSexxcQfd76ZDcTVTlAvv4';
-let GROQ_KEY = localStorage.getItem('vai_groq_key') || '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';
+let GROQ_KEY = localStorage.getItem('vai_groq_key') || '';
 let FAL_KEY = localStorage.getItem('vai_fal_key') || '7bc542c6-dd36-4ba6-98dd-9c2614ee41a4:207622966ffd193dc0ea88460a884e66';
 let HF_KEY = localStorage.getItem('vai_hf_key') || '';
-const GROQ_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
-const GROQ_TEXT = 'llama-3.3-70b-versatile';
+let GEMINI_KEY = localStorage.getItem('vai_gemini_key') || '';
+const GEMINI_VISION = 'gemini-2.0-flash';
+const GEMINI_TEXT = 'gemini-2.0-flash';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null, isGuest = false, currentTab = 'create';
 let lang = localStorage.getItem('vai_lang') || 'fr';
 
-// ══ GROQ ══
+// ══ GEMINI ══
 async function callGroq(messages, system, max = 1200, vision = false) {
-  // Utilise la Netlify Function (clé secrète côté serveur) ou fallback clé locale
-  const useProxy = window.location.hostname.includes('netlify.app') || window.location.hostname.includes('netlify');
-  const endpoint = useProxy
-    ? '/.netlify/functions/groq'
-    : 'https://api.groq.com/openai/v1/chat/completions';
-  const headers = useProxy
-    ? { 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_KEY };
-  const r = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ model: vision ? GROQ_VISION : GROQ_TEXT, max_tokens: max, messages: [{ role: 'system', content: system }, ...messages] })
+  // Alias pour compatibilité — appelle Gemini
+  return callGemini(messages, system, max, vision);
+}
+async function callGemini(messages, system, max = 1200, vision = false) {
+  const useProxy = window.location.hostname.includes('netlify');
+  if(useProxy) {
+    const r = await fetch('/.netlify/functions/gemini', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({messages, system, max, vision})
+    });
+    if(!r.ok) throw new Error('Gemini '+ r.status +': '+ await r.text());
+    return (await r.json()).text || '';
+  }
+  // Dev local — appel direct
+  const key = GEMINI_KEY;
+  if(!key) throw new Error('401');
+  return _geminiDirect(messages, system, max, vision, key);
+}
+async function _geminiDirect(messages, system, max, vision, key) {
+  const model = GEMINI_TEXT;
+  const contents = messages.map(m => {
+    if(vision && m.content && Array.isArray(m.content)) {
+      return { role:'user', parts: m.content.map(p => {
+        if(p.type==='image_url') {
+          const b64 = p.image_url.url.split(',')[1] || p.image_url.url;
+          return {inlineData:{mimeType:'image/jpeg',data:b64}};
+        }
+        return {text: p.text||''};
+      })};
+    }
+    return {role: m.role==='assistant'?'model':'user', parts:[{text: String(m.content||'')}]};
   });
-  if (!r.ok) throw new Error('Groq ' + r.status + ': ' + await r.text());
-  return (await r.json()).choices?.[0]?.message?.content || '';
+  const body = {
+    system_instruction:{parts:[{text:system}]},
+    contents,
+    generationConfig:{maxOutputTokens:max}
+  };
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error('Gemini '+r.status+': '+await r.text());
+  const data = await r.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 function pJ(raw) {
   const clean = raw.replace(/```json|```/g, '').trim();
@@ -706,7 +735,7 @@ JSON UNIQUEMENT :
       const parsed=pJ(raw);
       try{await dbInsert('listings',{title:parsed.title,price:parsed.price,price_min:parsed.priceMin,price_max:parsed.priceMax,description:parsed.description,hashtags:parsed.hashtags,defects:parsed.defects||[],tips:parsed.tips||[],photo_url:dataUrl});}catch(_){}
       result={...parsed,photoUrl:dataUrl};
-    }catch(e){console.error(e);err=(e.message.includes('401')||e.message.includes('invalid_api_key'))?(lang==='fr'?'❌ Clé Groq invalide — cliquez sur ⚙️ Clés API dans le menu pour la mettre à jour.\n(Gratuit sur console.groq.com → API Keys)':'❌ Invalid Groq key — click ⚙️ API Keys in the sidebar to update it.\n(Free at console.groq.com → API Keys)'):g(lang,'C','er')+'\n'+e.message;}
+    }catch(e){console.error(e);err=(e.message.includes('401')||e.message.includes('invalid_api_key')||e.message.includes('API_KEY'))?(lang==='fr'?'❌ Clé IA invalide — contactez le support ou réessayez.':'❌ Invalid AI key — contact support or try again.'):g(lang,'C','er')+'\n'+e.message;}
     loading=false;redrawPhoto();redrawResult();
   }
   redrawPhoto();redrawResult();return wrap;

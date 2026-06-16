@@ -286,12 +286,17 @@ async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
   onProgress && onProgress(30, lang==='fr'?'Suppression du fond (IA gratuite)…':'Removing background (free AI)…');
 
   // Appel API Hugging Face RMBG-1.4
-  const useProxy = window.location.hostname.includes('netlify');
-  const endpoint = useProxy ? '/.netlify/functions/hf' : 'https://api-inference.huggingface.co/models/briaai/RMBG-1.4';
+  // Récupère la clé HF depuis Netlify si pas déjà en cache
+  if(!HF_KEY && window.location.hostname.includes('netlify')) {
+    try {
+      const cfg = await fetch('/.netlify/functions/config').then(r=>r.json());
+      if(cfg.hfKey) { HF_KEY = cfg.hfKey; localStorage.setItem('vai_hf_key', HF_KEY); }
+    } catch(_) {}
+  }
   const headers = {'Content-Type':'application/octet-stream'};
-  if(!useProxy && HF_KEY) headers['Authorization'] = 'Bearer ' + HF_KEY;
+  if(HF_KEY) headers['Authorization'] = 'Bearer ' + HF_KEY;
 
-  const res = await fetch(endpoint, { method:'POST', headers, body: blob });
+  const res = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', { method:'POST', headers, body: blob });
 
   if(!res.ok) {
     const txt = await res.text();

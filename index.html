@@ -145,6 +145,7 @@ const SUPABASE_URL = 'https://xipkqhctpyjjtmmuxxac.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpcGtxaGN0cHlqanRtbXV4eGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzc4NDgsImV4cCI6MjA5NDQ1Mzg0OH0.ExADaMv_83GNQvWChw-xOeSexxcQfd76ZDcTVTlAvv4';
 let GROQ_KEY = localStorage.getItem('vai_groq_key') || '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';
 let FAL_KEY = localStorage.getItem('vai_fal_key') || '7bc542c6-dd36-4ba6-98dd-9c2614ee41a4:207622966ffd193dc0ea88460a884e66';
+let HF_KEY = localStorage.getItem('vai_hf_key') || '';
 const GROQ_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const GROQ_TEXT = 'llama-3.3-70b-versatile';
 
@@ -262,6 +263,101 @@ async function transformImageWithAI(imageBase64, bgChoice, onProgress) {
   const result = await fetchAsDataUrl(resultUrl);
   onProgress && onProgress(100, lang === 'fr' ? '✨ Transformation terminée !' : '✨ Done!');
   return result;
+}
+
+// ══ HUGGING FACE — SUPPRESSION DE FOND GRATUITE ══
+async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
+  onProgress && onProgress(10, lang==='fr'?'Envoi vers Hugging Face…':'Sending to Hugging Face…');
+
+  // Convertit base64 → blob
+  const byteChars = atob(imageBase64);
+  const byteArr = new Uint8Array(byteChars.length);
+  for(let i=0;i<byteChars.length;i++) byteArr[i]=byteChars.charCodeAt(i);
+  const blob = new Blob([byteArr], {type:'image/jpeg'});
+
+  onProgress && onProgress(30, lang==='fr'?'Suppression du fond (IA gratuite)…':'Removing background (free AI)…');
+
+  // Appel API Hugging Face RMBG-1.4
+  const headers = {'Content-Type':'application/octet-stream'};
+  if(HF_KEY) headers['Authorization'] = 'Bearer ' + HF_KEY;
+
+  const res = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
+    method:'POST', headers, body: blob
+  });
+
+  if(!res.ok) {
+    const txt = await res.text();
+    if(txt.includes('loading') || txt.includes('Loading')) {
+      throw new Error('hf_loading'); // modèle en cours de chargement, réessayer
+    }
+    throw new Error('Hugging Face erreur '+res.status+': '+txt.slice(0,150));
+  }
+
+  onProgress && onProgress(70, lang==='fr'?'Application du fond…':'Applying background…');
+
+  // Résultat = PNG avec fond transparent
+  const pngBlob = await res.blob();
+  const pngUrl = URL.createObjectURL(pngBlob);
+
+  // Applique le fond choisi sur canvas
+  const result = await applyBackgroundToTransparentImage(pngUrl, bgChoice);
+  URL.revokeObjectURL(pngUrl);
+
+  onProgress && onProgress(100, lang==='fr'?'✨ Fond supprimé !':'✨ Background removed!');
+  return result;
+}
+
+// Applique un fond coloré/texturé sur une image PNG transparent
+async function applyBackgroundToTransparentImage(pngUrl, bgChoice) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onerror = reject;
+    img.onload = () => {
+      const W = img.naturalWidth || 800;
+      const H = img.naturalHeight || 800;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Dessine le fond
+      const bgColors = {
+        white:  () => { ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,W,H); },
+        grey:   () => { ctx.fillStyle='#E8E8E8'; ctx.fillRect(0,0,W,H); },
+        marble: () => {
+          const g = ctx.createLinearGradient(0,0,W,H);
+          g.addColorStop(0,'#F5F0EB'); g.addColorStop(0.5,'#EDE5DA'); g.addColorStop(1,'#E8DDD0');
+          ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+          // veines marbre
+          ctx.strokeStyle='rgba(200,185,165,0.3)'; ctx.lineWidth=2;
+          for(let i=0;i<6;i++){
+            ctx.beginPath(); ctx.moveTo(Math.random()*W, 0);
+            ctx.bezierCurveTo(Math.random()*W,H/3,Math.random()*W,H*2/3,Math.random()*W,H);
+            ctx.stroke();
+          }
+        },
+        sky: () => {
+          const g = ctx.createLinearGradient(0,0,0,H);
+          g.addColorStop(0,'#DAEEFF'); g.addColorStop(1,'#F0F8FF');
+          ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+        },
+        rug: () => {
+          ctx.fillStyle='#F7F4EF'; ctx.fillRect(0,0,W,H);
+          ctx.strokeStyle='rgba(200,190,175,0.5)'; ctx.lineWidth=1;
+          for(let x=0;x<W;x+=8){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+          for(let y=0;y<H;y+=8){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+          ctx.strokeStyle='rgba(160,145,120,0.6)'; ctx.lineWidth=12;
+          ctx.strokeRect(20,20,W-40,H-40);
+        }
+      };
+      (bgColors[bgChoice] || bgColors.white)();
+
+      // Dessine l'image par-dessus (fond transparent)
+      ctx.drawImage(img, 0, 0, W, H);
+      resolve(canvas.toDataURL('image/jpeg', 0.92));
+    };
+    img.src = pngUrl;
+  });
 }
 
 async function fetchAsDataUrl(url) {
@@ -742,18 +838,42 @@ function buildRetouch(){
       if(opts.brightness!==5||opts.contrast!==5||opts.saturation!==5||opts.wrinkles>0){
         processedB64=await applyCanvasAdjustments(file,opts);
       }
-      let canvasFallback=false,resultDataUrl;
-      try{
-        resultDataUrl=await transformImageWithAI(processedB64,selectedBg,(pct,msg)=>{
-          progressPct=pct;progressMsg=msg;redrawPhoto();redrawProgress();
-        });
-      }catch(aiErr){
-        const isBalanceErr=aiErr.message.includes('Exhausted balance')||aiErr.message.includes('locked')||aiErr.message.includes('User is locked');
-        const isAuthErr=aiErr.message.includes('401')||aiErr.message.includes('Unauthorized')||aiErr.message.includes('Invalid');
-        if(isBalanceErr||isAuthErr){
-          canvasFallback=true;
-          resultDataUrl='data:image/jpeg;base64,'+processedB64;
-        }else{throw aiErr;}
+      let canvasFallback=false,resultDataUrl,hfUsed=false;
+      // 1. Essai Hugging Face (gratuit)
+      let hfAttempts=0;
+      while(hfAttempts<2){
+        try{
+          resultDataUrl=await transformImageWithHF(processedB64,selectedBg,(pct,msg)=>{
+            progressPct=pct;progressMsg=msg;redrawPhoto();redrawProgress();
+          });
+          hfUsed=true;break;
+        }catch(hfErr){
+          if(hfErr.message==='hf_loading'&&hfAttempts===0){
+            // Modèle en chargement, on attend 20s et on réessaie
+            progressMsg=lang==='fr'?'Modèle IA en démarrage (20s)…':'AI model warming up (20s)…';
+            redrawProgress();
+            await new Promise(r=>setTimeout(r,20000));
+            hfAttempts++;
+          }else{
+            console.warn('HF failed, trying fal.ai:',hfErr.message);break;
+          }
+        }
+      }
+      // 2. Fallback fal.ai
+      if(!hfUsed){
+        try{
+          resultDataUrl=await transformImageWithAI(processedB64,selectedBg,(pct,msg)=>{
+            progressPct=pct;progressMsg=msg;redrawPhoto();redrawProgress();
+          });
+        }catch(aiErr){
+          const isBalanceErr=aiErr.message.includes('Exhausted balance')||aiErr.message.includes('locked')||aiErr.message.includes('User is locked');
+          const isAuthErr=aiErr.message.includes('401')||aiErr.message.includes('Unauthorized')||aiErr.message.includes('Invalid');
+          if(isBalanceErr||isAuthErr||true){
+            // 3. Fallback canvas
+            canvasFallback=true;
+            resultDataUrl='data:image/jpeg;base64,'+processedB64;
+          }else{throw aiErr;}
+        }
       }
       result={before:preview,after:resultDataUrl,canvasFallback};
     }catch(e){
@@ -876,17 +996,22 @@ function showSettings(){
   box.appendChild(h('div',{style:{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:18,marginBottom:4}},'⚙️ '+(lang==='fr'?'Clés API':'API Keys')));
   box.appendChild(h('div',{style:{fontSize:13,color:'var(--sub)',marginBottom:20,lineHeight:1.6}},lang==='fr'?'Mettez à jour vos clés API. Sauvegardées dans votre navigateur.':'Update your API keys. Saved in your browser.'));
   const groqInp=h('input',{type:'text',className:'inp',placeholder:'gsk_...',value:GROQ_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
-  const falInp=h('input',{type:'text',className:'inp',placeholder:'xxxx:xxxx',value:FAL_KEY,style:{marginBottom:16,fontFamily:'monospace',fontSize:11}});
+  const falInp=h('input',{type:'text',className:'inp',placeholder:'xxxx:xxxx',value:FAL_KEY,style:{marginBottom:10,fontFamily:'monospace',fontSize:11}});
+  const hfInp=h('input',{type:'text',className:'inp',placeholder:'hf_...',value:HF_KEY,style:{marginBottom:16,fontFamily:'monospace',fontSize:11}});
   box.appendChild(h('label',{className:'lbl'},'Groq API Key'));
   box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'Gratuit sur console.groq.com → API Keys':'Free at console.groq.com → API Keys'));
   box.appendChild(groqInp);
-  box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'fal.ai API Key'));
-  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'fal.ai/dashboard/keys — solde : fal.ai/dashboard/billing':'fal.ai/dashboard/keys — balance: fal.ai/dashboard/billing'));
+  box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'Hugging Face API Key '+(lang==='fr'?'(photo gratuite)':'(free photo)')));
+  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'Gratuit sur huggingface.co → Settings → Access Tokens':'Free at huggingface.co → Settings → Access Tokens'));
+  box.appendChild(hfInp);
+  box.appendChild(h('label',{className:'lbl',style:{marginTop:4}},'fal.ai API Key '+(lang==='fr'?'(optionnel)':'(optional)')));
+  box.appendChild(h('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,lineHeight:1.6}},lang==='fr'?'fal.ai/dashboard/keys — optionnel, Hugging Face est utilisé en priorité':'fal.ai/dashboard/keys — optional, Hugging Face is used first'));
   box.appendChild(falInp);
   const saveBtn=h('button',{className:'btn',style:{marginTop:4},onClick:()=>{
-    const gk=groqInp.value.trim(),fk=falInp.value.trim();
+    const gk=groqInp.value.trim(),fk=falInp.value.trim(),hk=hfInp.value.trim();
     if(gk){localStorage.setItem('vai_groq_key',gk);GROQ_KEY=gk;}
     if(fk){localStorage.setItem('vai_fal_key',fk);FAL_KEY=fk;}
+    if(hk){localStorage.setItem('vai_hf_key',hk);HF_KEY=hk;}
     saveBtn.textContent='✅ '+(lang==='fr'?'Sauvegardé !':'Saved!');
     setTimeout(()=>ov.remove(),1500);
   }},lang==='fr'?'💾 Sauvegarder':'💾 Save');

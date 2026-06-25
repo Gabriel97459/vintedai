@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
   try {
     const { messages, system, max, vision } = req.body;
-    const model = 'gemini-1.5-flash';
+    const model = 'gemini-2.0-flash-lite';
 
     const contents = messages.map(m => {
       if (vision && Array.isArray(m.content)) {
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
       generationConfig: { maxOutputTokens: max || 1200 }
     };
 
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GEMINI_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)

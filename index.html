@@ -147,8 +147,8 @@ let GROQ_KEY = localStorage.getItem('vai_groq_key') || '';
 let FAL_KEY = localStorage.getItem('vai_fal_key') || '7bc542c6-dd36-4ba6-98dd-9c2614ee41a4:207622966ffd193dc0ea88460a884e66';
 let HF_KEY = localStorage.getItem('vai_hf_key') || '';
 let GEMINI_KEY = localStorage.getItem('vai_gemini_key') || '';
-const GEMINI_VISION = 'gemini-2.0-flash';
-const GEMINI_TEXT = 'gemini-2.0-flash';
+const GEMINI_VISION = 'gemini-1.5-flash';
+const GEMINI_TEXT = 'gemini-1.5-flash';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null, isGuest = false, currentTab = 'create';

@@ -160,7 +160,7 @@ async function callGroq(messages, system, max = 1200, vision = false) {
   return callGemini(messages, system, max, vision);
 }
 async function callGemini(messages, system, max = 1200, vision = false) {
-  const useProxy = window.location.hostname.includes('netlify');
+  const useProxy = !['localhost','127.0.0.1'].includes(window.location.hostname);
   if(useProxy) {
     const r = await fetch('/api/gemini', {
       method:'POST', headers:{'Content-Type':'application/json'},

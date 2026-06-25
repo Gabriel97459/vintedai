@@ -162,7 +162,7 @@ async function callGroq(messages, system, max = 1200, vision = false) {
 async function callGemini(messages, system, max = 1200, vision = false) {
   const useProxy = window.location.hostname.includes('netlify');
   if(useProxy) {
-    const r = await fetch('/.netlify/functions/gemini', {
+    const r = await fetch('/api/gemini', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({messages, system, max, vision})
     });
@@ -318,7 +318,7 @@ async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
   // Récupère toujours la clé HF fraîche depuis Netlify
   if(window.location.hostname.includes('netlify')) {
     try {
-      const cfg = await fetch('/.netlify/functions/config').then(r=>r.json());
+      const cfg = await fetch('/api/config').then(r=>r.json());
       if(cfg.hfKey) HF_KEY = cfg.hfKey;
     } catch(_) {}
   }
@@ -704,18 +704,22 @@ JSON UNIQUEMENT :
     const newBtn=h('button',{className:'btng',style:{flex:1},onClick:()=>{file=null;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=null;result=null;err='';redrawPhoto();redrawResult();}},g(lang,'C','nb'));
     resultCard.appendChild(h('div',{style:{display:'flex',gap:9}},copyBtn,newBtn));
     // Bouton envoyer vers Bot Vinted
+    const urlInp=h('input',{type:'text',placeholder:'🔗 URL Vinted du produit (optionnel)',className:'inp',style:{width:'100%',marginTop:10,fontSize:12}});
+    resultCard.appendChild(urlInp);
     const botStatusEl=h('div',{style:{fontSize:12,textAlign:'center',marginTop:6,color:'var(--sub)',minHeight:18}});
     const botBtn=h('button',{className:'btn',style:{width:'100%',marginTop:8,background:'linear-gradient(135deg,#8b5cf6,#10b981)'},onClick:async()=>{
       const email=sb.auth.getUser?((await sb.auth.getUser()).data?.user?.email)||'guest':'guest';
-      const msg=lang==='fr'
+      const msgText=lang==='fr'
         ?`Bonjour ! Je vends : ${result.title||''}. ${(result.description||'').split('\n\n')[0]||''}`
         :`Hi! I'm selling: ${result.title||''}. ${(result.description||'').split('\n\n')[0]||''}`;
+      const productUrl=(urlInp.value||'').trim();
+      const msg=productUrl?JSON.stringify({text:msgText,url:productUrl}):msgText;
       botBtn.disabled=true;botBtn.textContent='⏳ Envoi…';
       try{
         const{error}=await sb.from('vinted_messages').insert({user_email:email,title:result.title||'',message:msg,price:String(result.price||'')});
         if(error)throw error;
         botBtn.textContent='✅ Envoyé au Bot !';
-        botStatusEl.textContent=lang==='fr'?'Le 🤖 sur Vinted affichera ce message automatiquement.':'The 🤖 on Vinted will show this message automatically.';
+        botStatusEl.textContent=lang==='fr'?'Le 🤖 sur Vinted affichera ce message + bouton d\'achat.':'The 🤖 on Vinted will show this message + buy button.';
         botStatusEl.style.color='var(--g)';
         setTimeout(()=>{botBtn.disabled=false;botBtn.textContent='📤 '+(lang==='fr'?'Envoyer vers Bot Vinted':'Send to Vinted Bot');},4000);
       }catch(e){

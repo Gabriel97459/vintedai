@@ -143,6 +143,14 @@
           return;
         }
         msgs.forEach(m => {
+          // Parser le message (peut être JSON {text, url} ou texte brut)
+          let msgText = m.message || '';
+          let productUrl = null;
+          try {
+            const parsed = JSON.parse(m.message);
+            if (parsed.text) { msgText = parsed.text; productUrl = parsed.url || null; }
+          } catch (_) {}
+
           const item = document.createElement('div');
           Object.assign(item.style, {
             background: 'rgba(139,92,246,.1)', borderRadius: '10px', padding: '8px 10px',
@@ -153,7 +161,7 @@
           titleEl.textContent = m.title || '(sans titre)';
           const preview = document.createElement('div');
           preview.style.cssText = 'font-size:11px;color:#7c7a9a;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical';
-          preview.textContent = m.message || '';
+          preview.textContent = msgText;
           const actions = document.createElement('div');
           actions.style.cssText = 'display:flex;gap:5px;margin-top:6px';
 
@@ -166,7 +174,7 @@
           });
           useBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            const ok = injectMessage(m.message);
+            const ok = injectMessage(msgText);
             if (ok) {
               if (autoSend) setTimeout(() => { clickSend(); showToast('✅ Message envoyé !'); }, 600);
               try { await markSent(m.id); } catch (_) {}
@@ -175,6 +183,24 @@
               useBtn.disabled = true;
             }
           });
+
+          // Bouton "Ouvrir sur Vinted" si URL disponible
+          if (productUrl) {
+            const buyBtn = document.createElement('button');
+            buyBtn.textContent = '🛒 Acheter';
+            Object.assign(buyBtn.style, {
+              padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#10b981,#059669)', color: 'white',
+              fontSize: '11px', fontWeight: '700', fontFamily: 'system-ui,sans-serif',
+            });
+            buyBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              window.open(productUrl, '_blank');
+            });
+            actions.appendChild(useBtn); actions.appendChild(buyBtn);
+          } else {
+            actions.appendChild(useBtn);
+          }
 
           const delBtn = document.createElement('button');
           delBtn.textContent = '🗑';
@@ -188,7 +214,7 @@
             try { await markSent(m.id); item.remove(); } catch (_) {}
           });
 
-          actions.appendChild(useBtn); actions.appendChild(delBtn);
+          actions.appendChild(delBtn);
           item.appendChild(titleEl); item.appendChild(preview); item.appendChild(actions);
           listEl.appendChild(item);
         });

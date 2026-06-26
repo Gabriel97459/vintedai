@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         VintedAI — Messages Automatiques
-// @namespace    https://optivintedai.netlify.app
+// @namespace    https://vintedai-chi.vercel.app
 // @version      2.0
 // @description  Connecté à VintedAI — affiche et envoie les messages générés par l'IA
 // @match        https://www.vinted.fr/*

@@ -5,36 +5,29 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const GEMINI_KEY = process.env.GEMINI_KEY;
-  if (!GEMINI_KEY) return res.status(500).json({ error: 'GEMINI_KEY not configured' });
+  const GROQ_KEY = process.env.GROQ_KEY;
+  if (!GROQ_KEY) return res.status(500).json({ error: 'GROQ_KEY not configured' });
 
   try {
     const { messages, system, max, vision } = req.body;
-    const model = 'gemini-2.0-flash-lite';
 
-    const contents = messages.map(m => {
-      if (vision && Array.isArray(m.content)) {
-        return { role: 'user', parts: m.content.map(p => {
-          if (p.type === 'image_url') {
-            const b64 = p.image_url.url.includes(',') ? p.image_url.url.split(',')[1] : p.image_url.url;
-            return { inlineData: { mimeType: 'image/jpeg', data: b64 } };
-          }
-          return { text: p.text || '' };
-        })};
-      }
-      return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content || '') }] };
-    });
+    const model = vision ? 'llama-3.2-11b-vision-preview' : 'llama-3.3-70b-versatile';
 
-    const body = {
-      system_instruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig: { maxOutputTokens: max || 1200 }
-    };
+    const groqMessages = [];
+    if (system) groqMessages.push({ role: 'system', content: system });
+    groqMessages.push(...messages);
 
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GROQ_KEY
+      },
+      body: JSON.stringify({
+        model,
+        messages: groqMessages,
+        max_tokens: max || 1200
+      })
     });
 
     if (!r.ok) {
@@ -43,7 +36,7 @@ module.exports = async (req, res) => {
     }
 
     const data = await r.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
     return res.status(200).json({ text });
   } catch (e) {
     return res.status(500).json({ error: e.message });

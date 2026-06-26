@@ -140,7 +140,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <script>
 'use strict';
 
-const SITE_URL = 'https://optivintedai.netlify.app';
+const SITE_URL = 'https://vintedai-chi.vercel.app';
 const SUPABASE_URL = 'https://xipkqhctpyjjtmmuxxac.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpcGtxaGN0cHlqanRtbXV4eGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Nzc4NDgsImV4cCI6MjA5NDQ1Mzg0OH0.ExADaMv_83GNQvWChw-xOeSexxcQfd76ZDcTVTlAvv4';
 let GROQ_KEY = localStorage.getItem('vai_groq_key') || '';
@@ -316,7 +316,7 @@ async function transformImageWithHF(imageBase64, bgChoice, onProgress) {
 
   // Appel API Hugging Face RMBG-1.4
   // Récupère toujours la clé HF fraîche depuis Netlify
-  if(window.location.hostname.includes('netlify')) {
+  if(!['localhost','127.0.0.1'].includes(window.location.hostname)) {
     try {
       const cfg = await fetch('/api/config').then(r=>r.json());
       if(cfg.hfKey) HF_KEY = cfg.hfKey;
@@ -1036,7 +1036,7 @@ function buildHistory(){
 
 // ══ SETTINGS ══
 function showSettings(){
-  const isNetlify = window.location.hostname.includes('netlify');
+  const isNetlify = !['localhost','127.0.0.1'].includes(window.location.hostname);
   const ov=h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.82)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}});
   ov.addEventListener('click',()=>ov.remove());
   const box=h('div',{style:{background:'#16142a',border:'1px solid var(--border)',borderRadius:22,padding:'28px 24px',maxWidth:440,width:'100%',animation:'pop .3s ease'}});
